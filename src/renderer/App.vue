@@ -30,6 +30,40 @@
                     </md-button>
                 </div>
             </md-app-toolbar>
+            <md-app-drawer md-permanent="full" class="drawer md-scrollbar" >
+                <md-list>
+                    <md-list-item to="/" exact>
+                        <md-icon>home</md-icon>
+                        <span class="md-list-item-text">Home</span>
+                    </md-list-item>
+                    <md-list-item to="/browse">
+                        <md-icon>explore</md-icon>
+                        <span class="md-list-item-text">Browse</span>
+                    </md-list-item>
+                </md-list>
+                <md-list class="md-dense">
+                    <md-subheader class="smol-subheader">Your Library</md-subheader>
+
+                    <md-list-item to="/liked-songs">
+                        <span class="md-list-item-text">Liked Songs</span>
+                    </md-list-item>
+                    <md-list-item to="/library/albums">
+                        <span class="md-list-item-text">Albums</span>
+                    </md-list-item>
+                    <md-list-item to="/library/artists">
+                        <span class="md-list-item-text">Artists</span>
+                    </md-list-item>
+                    <md-list-item to="/library/playlists">
+                        <span class="md-list-item-text">Playlists</span>
+                    </md-list-item>
+
+                    <md-subheader class="smol-subheader" v-if="playlists.length > 0">Playlists</md-subheader>
+                    <md-list-item :to="`/playlist?id=${playlist.id}`" v-for="playlist in playlists" :key="playlist.id"
+                                  class="playlist-list-item">
+                        <span class="md-list-item-text">{{playlist.name}}</span>
+                    </md-list-item>
+                </md-list>
+            </md-app-drawer>
             <md-app-content>
                 <router-view/>
             </md-app-content>
@@ -46,7 +80,10 @@
 
 <script>
     //TODO:
-    //Some songs are silent???
+    //Volume knob change function
+    //Add side bar when window is wide enough
+    //Improve now playing for big screens
+    //Improve loading of liked songs
 
 
     import SpotifyApi from "./js/SpotifyApi";
@@ -61,9 +98,10 @@
         data() {
             return {
                 fullscreen: false,
+                playlists: [],
             }
         },
-        mounted() {
+        async mounted() {
             if (!SpotifyApi.authorized() && navigator.onLine)
                 this.$router.push('/login');
 
@@ -72,7 +110,9 @@
 
             window.addEventListener('resize', () => {
                 this.fullscreen = win.isMaximized();
-            })
+            });
+
+            this.playlists = (await SpotifyApi.api.getUserPlaylists()).items;
         },
         methods: {
             minimize() {
@@ -130,6 +170,24 @@
         height: calc(100% - 10px);
         top: 5px;
         position: relative;
+    }
+
+    .drawer {
+        padding-top: 10px;
+        max-width: 200px !important;
+    }
+
+    .smol-subheader {
+        font-size: 10px !important;
+        text-transform: uppercase;
+    }
+
+    .playlist-list-item {
+        opacity: 0.9;
+        font-size: 10px !important;
+        padding: 1px !important;
+        margin: 5px !important;
+        height: 24px !important;
     }
 
     .bottom-bar {

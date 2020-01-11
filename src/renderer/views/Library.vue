@@ -1,7 +1,7 @@
 <template>
     <div>
-        <md-tabs class="tabs">
-            <md-tab id="tab-playlists" md-label="Playlists" md-icon="playlist_play">
+        <md-tabs class="tabs" md-sync-route>
+            <md-tab id="tab-playlists" md-label="Playlists" md-icon="playlist_play" to="/library/playlists">
                 <md-button class="liked-songs md-raised md-accent" :to="`/liked-songs`">Liked Tracks
                 </md-button>
                 <md-button class="new-playlist-button" @click="showCreateDialog">
@@ -10,10 +10,10 @@
                 </md-button>
                 <album-row v-for="playlist in playlists" :key="playlist.id" :album="playlist" type="playlist"/>
             </md-tab>
-            <md-tab id="tab-artists" md-label="Artists" md-icon="face">
+            <md-tab id="tab-artists" md-label="Artists" md-icon="face" to="/library/artists">
                 <album-row v-for="artist in artists" :key="artist.id" :album="artist" type="artist"/>
             </md-tab>
-            <md-tab id="tab-albums" md-label="Albums" md-icon="album">
+            <md-tab id="tab-albums" md-label="Albums" md-icon="album" to="/library/albums">
                 <album-row v-for="album in albums" :key="album.id" :album="album" type="album"/>
             </md-tab>
         </md-tabs>
