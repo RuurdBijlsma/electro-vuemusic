@@ -357,6 +357,7 @@
                     this.$refs.audio.currentTime = 0;
                     return;
                 }
+                this.$refs.audio.pause();
                 let currentIndex = this.getTrackIndex(this.track);
                 let newIndex = (currentIndex + n) % this.queue.length;
                 if (newIndex < 0)
