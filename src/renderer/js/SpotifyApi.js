@@ -1,11 +1,14 @@
-import SpotifyAuthorization from "@/js/SpotifyAuthorization";
+import SpotifyAuthorization from "./SpotifyAuthorization";
 import SpotifyWebApi from 'spotify-web-api-js';
 import Utils from "./Utils";
-import Cacher from "./Cacher";
+import SpotifyModule from "./SpotifyModule";
+import VmModule from "../../node/VmModule";
 
 class SpotifyApi {
     constructor() {
-        this.dataSaver = false;
+        this.spotifyModule = new SpotifyModule();
+        this.vmModule = new VmModule();
+        console.log(this.vmModule);
 
         this.server = Utils.getServer();
         this.clientId = 'cd272aa2194c46c7a460e9a202f66002';
@@ -15,32 +18,14 @@ class SpotifyApi {
         this.authUrl = 'https://accounts.spotify.com/';
         this.scopes = encodeURIComponent('ugc-image-upload user-read-email user-read-private playlist-read-collaborative playlist-modify-public playlist-read-private playlist-modify-private user-library-modify user-library-read user-top-read user-read-recently-played user-follow-read user-follow-modify');
         this.api = new SpotifyWebApi();
-        this.cacher = new Cacher();
 
-        this.cancelCache = -1;
         this.loadAuth();
         if (this.authorized())
             this.api.setAccessToken(this.auth.token);
     }
 
     async getUrl(query) {
-        let localUrl = await this.cacher.getLocalUrl(query);
-        if (localUrl)
-            return {url: localUrl, local: true};
-        else {
-            if (!this.dataSaver) {
-                this.cacher.cache(query);
-            }
-            return {url: this.getStreamUrl(query), local: false};
-        }
-    }
-
-    getStreamUrl(query) {
-        return this.server + '/stream?query=' + encodeURIComponent(query);
-    }
-
-    getDownloadUrl(query) {
-        return this.server + '/stream?query=' + encodeURIComponent(query);
+        return this.vmModule.stream(query);
     }
 
     saveAuth() {
@@ -92,16 +77,17 @@ class SpotifyApi {
             return;
         }
 
-        let response = await fetch(this.server + '/refresh', {
-            method: 'post',
-            body: JSON.stringify({
-                'refresh_token': this.auth.refresh,
-            }),
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        });
-        return await response.json();
+        return this.spotifyModule.refresh(this.auth.refresh);
+        // let response = await fetch(this.server + '/refresh', {
+        //     method: 'post',
+        //     body: JSON.stringify({
+        //         'refresh_token': this.auth.refresh,
+        //     }),
+        //     headers: {
+        //         'Content-Type': 'application/json'
+        //     }
+        // });
+        // return await response.json();
     }
 
     async getToken() {
@@ -110,20 +96,19 @@ class SpotifyApi {
             return;
         }
 
-        let response = await fetch(this.server + '/token', {
-            method: 'post',
-            body: JSON.stringify({
-                'redirect_url': this.redirectUrl,
-                'auth_code': this.auth.code
-            }),
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        });
-        return await response.json();
+        return this.spotifyModule.token(this.redirectUrl, this.auth.code);
+        // let response = await fetch(this.server + '/token', {
+        //     method: 'post',
+        //     body: JSON.stringify({
+        //         'redirect_url': this.redirectUrl,
+        //         'auth_code': this.auth.code
+        //     }),
+        //     headers: {
+        //         'Content-Type': 'application/json'
+        //     }
+        // });
+        // return await response.json();
     }
 }
 
-console.log("SpotifyApi 1");
 export default new SpotifyApi();
-console.log("SpotifyApi 2");

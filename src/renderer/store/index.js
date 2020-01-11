@@ -3,7 +3,6 @@ import Vue from "vue";
 
 Vue.use(Vuex);
 
-console.log("Store 1");
 export default new Vuex.Store({
     state: {
         track: null,
@@ -32,4 +31,3 @@ export default new Vuex.Store({
         },
     }
 });
-console.log("Store 2");

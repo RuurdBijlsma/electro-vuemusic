@@ -67,7 +67,6 @@
     import ArtistsSpan from "./ArtistsSpan";
     import SpotifyApi from "../js/SpotifyApi";
 
-    console.log("TrackItem 1");
     export default {
         name: "TrackItem",
         components: {ArtistsSpan},
@@ -142,7 +141,6 @@
             }
         }
     }
-    console.log("TrackItem 2");
 </script>
 
 <style scoped>

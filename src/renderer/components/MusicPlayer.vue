@@ -19,13 +19,7 @@
                     <div class="down">
                         <p class="md-headline">{{track.name}}</p>
                         <artists-span :artists="track.artists"/>
-                        <md-button class="md-icon-button page-local" v-if="local">
-                            <md-icon>
-                                cloud_download
-                            </md-icon>
-                            <md-tooltip>Playing offline</md-tooltip>
-                        </md-button>
-                        <md-button class="md-icon-button page-local" v-else>
+                        <md-button class="md-icon-button page-local">
                             <md-icon>
                                 wifi_tethering
                             </md-icon>
@@ -89,13 +83,7 @@
                         <span class="dot">•</span>
                         <artists-span :artists="track.artists"/>
                     </div>
-                    <md-button class="md-icon-button local-icon" v-if="local">
-                        <md-icon>
-                            cloud_download
-                        </md-icon>
-                        <md-tooltip md-direction="top">Playing offline</md-tooltip>
-                    </md-button>
-                    <md-button class="md-icon-button local-icon" v-else>
+                    <md-button class="md-icon-button local-icon">
                         <md-icon>
                             wifi_tethering
                         </md-icon>
@@ -104,7 +92,8 @@
                 </div>
                 <div class="bottom-player">
                     <div class="left-content">
-                        <md-button class="md-icon-button" @click="$store.commit('toggleShuffle')" v-if="windowWidth > 700">
+                        <md-button class="md-icon-button" @click="$store.commit('toggleShuffle')"
+                                   v-if="windowWidth > 700">
                             <md-icon :class="$store.state.shuffle?'md-primary':'gray'">shuffle</md-icon>
                         </md-button>
                         <md-button class="md-icon-button" @click="skip(-1)">
@@ -123,7 +112,8 @@
                         <md-button class="md-icon-button" @click="skip(1)">
                             <md-icon>skip_next</md-icon>
                         </md-button>
-                        <md-button class="md-icon-button" @click="$store.commit('toggleRepeat')" v-if="windowWidth > 700">
+                        <md-button class="md-icon-button" @click="$store.commit('toggleRepeat')"
+                                   v-if="windowWidth > 700">
                             <md-icon :class="$store.state.repeat?'md-primary':'gray'">repeat</md-icon>
                         </md-button>
                     </div>
@@ -184,8 +174,12 @@
     import SpotifyApi from "../js/SpotifyApi";
     import Utils from "../js/Utils";
     import TrackList from "./TrackList";
+    import path from 'path';
+    import {remote} from 'electron';
+    import baseUrl from '../../node/BaseUrl.mjs';
 
-    console.log("MusicPlayer 1");
+    console.log({baseUrl})
+
     export default {
         name: "MusicPlayer",
         components: {TrackList, ArtistsSpan},
@@ -205,7 +199,6 @@
                 dontPlay: false,
                 interval: -1,
                 seeking: false,
-                local: false,
                 shuffle: false,
                 repeat: true,
                 volume: 1,
@@ -229,13 +222,51 @@
                 this.volume = JSON.parse(localStorage.volume);
 
             let audio = this.$refs.audio;
+            console.log(path.join(baseUrl, '/img/playicon.png'));
 
+            let playIcon = {
+                tooltip: 'Play',
+                icon: path.join(baseUrl, '/img/playicon.png'),
+                click: () => {
+                    this.play();
+                },
+            };
+            let pauseIcon = {
+                tooltip: 'Play',
+                icon: path.join(baseUrl, '/img/pauseicon.png'),
+                click: () => {
+                    this.pause();
+                },
+            };
+            let prevIcon = {
+                tooltip: 'Previous Song',
+                icon: path.join(baseUrl, '/img/previcon.png'),
+                click: () => {
+                    this.skip(-1);
+                }
+            };
+            let nextIcon = {
+                tooltip: 'Next Song',
+                icon: path.join(baseUrl, '/img/nexticon.png'),
+                click: () => {
+                    this.skip(1);
+                }
+            };
+            this.playingIcons = [prevIcon, pauseIcon, nextIcon];
+            this.pausedIcons = [prevIcon, playIcon, nextIcon];
+            let win = remote.getCurrentWindow();
+            let thumbAdded = win.setThumbarButtons(this.pausedIcons);
+            console.log("Thumbbar buttons were added?", thumbAdded);
             audio.onplay = () => {
-                // navigator.mediaSession.playbackState = 'playing';
+                navigator.mediaSession.playbackState = 'playing';
+                let thumbAdded = win.setThumbarButtons(this.playingIcons);
+                console.log("Thumbbar buttons were added?", thumbAdded);
                 this.playing = true;
             };
             audio.onpause = () => {
-                // navigator.mediaSession.playbackState = 'paused';
+                navigator.mediaSession.playbackState = 'paused';
+                let thumbAdded = win.setThumbarButtons(this.pausedIcons);
+                console.log("Thumbbar buttons were added?", thumbAdded);
                 this.playing = false;
             };
 
@@ -278,8 +309,13 @@
                     let progress = x / container.offsetWidth;
                     progress = Math.min(1, Math.max(0, progress));
                     let audio = this.$refs.audio;
-                    if (audio.duration)
-                        audio.currentTime = audio.duration * progress;
+                    if (audio.duration) {
+                        if (audio.hasOwnProperty('fastSeek')) {
+                            audio.fastSeek(audio.duration * progress);
+                        } else {
+                            audio.currentTime = audio.duration * progress;
+                        }
+                    }
                 }
             },
             async playSong(previousTrack, track) {
@@ -300,10 +336,9 @@
                     this.loadingAudio = true;
                     this.setTrackMetaData(track);
 
-                    let {url, local} = await SpotifyApi.getUrl(Utils.trackToQuery(track));
+                    let url = await SpotifyApi.getUrl(Utils.trackToQuery(track));
                     console.log(url);
                     audio.src = url;
-                    this.local = local;
                     audio.onended = () => this.skip(1);
                     audio.oncanplay = () => {
                         this.loadingAudio = false;
@@ -337,7 +372,7 @@
             },
             setMediaPosition() {
                 let audio = this.$refs.audio;
-                if (audio.duration && navigator.hasOwnProperty('mediaSession') && navigator.mediaSession.hasOwnProperty('setPositionState')) {
+                if (audio.duration && navigator.mediaSession.hasOwnProperty('setPositionState')) {
                     navigator.mediaSession.setPositionState({
                         duration: audio.duration,
                         playbackRate: 1,
@@ -346,6 +381,7 @@
                 }
             },
             setTrackMetaData(track) {
+                let audio = this.$refs.audio;
                 let artistsString = track.artists.map(a => a.name).join(', ');
                 document.title = track.name + ' - ' + artistsString;
                 // document.querySelector('meta[name="theme-color"').content = track.color;
@@ -353,31 +389,86 @@
                 if (!('mediaSession' in navigator))
                     return;
 
-                let image = 'img/notfound.png';
+                let artwork = [{
+                    src: 'img/notfound.png',
+                    type: 'image/png',
+                }];
+                console.log('IMAGES', track.album.images);
                 if (track.album.images.length > 0)
-                    image = track.album.images[0].url;
+                    artwork = track.album.images.map(i => {
+                        return {
+                            src: i.url,
+                            type: 'image/png',
+                            sizes: `${i.width}x${i.height}`,
+                        };
+                    });
 
                 // eslint-disable-next-line no-undef
                 navigator.mediaSession.metadata = new MediaMetadata({
                     title: track.name,
                     artist: artistsString,
                     album: track.album.name,
-                    artwork: [
-                        {src: image, type: 'image/png'},
-                    ]
+                    artwork
                 });
-                navigator.mediaSession.setActionHandler('play', async () => {
-                    await this.play();
-                });
-                navigator.mediaSession.setActionHandler('pause', async () => {
-                    await this.pause();
-                });
+
+
+                /* Previous Track & Next Track */
+
                 navigator.mediaSession.setActionHandler('previoustrack', () => {
                     this.skip(-1);
                 });
+
                 navigator.mediaSession.setActionHandler('nexttrack', () => {
                     this.skip(1);
                 });
+
+                /* Seek Backward & Seek Forward */
+
+                let defaultSkipTime = 10; /* Time to skip in seconds by default */
+
+                navigator.mediaSession.setActionHandler('seekbackward', (event) => {
+                    const skipTime = event.seekOffset || defaultSkipTime;
+                    audio.currentTime = Math.max(audio.currentTime - skipTime, 0);
+                });
+
+                navigator.mediaSession.setActionHandler('seekforward', (event) => {
+                    const skipTime = event.seekOffset || defaultSkipTime;
+                    audio.currentTime = Math.min(audio.currentTime + skipTime, audio.duration);
+                });
+
+                /* Play & Pause */
+
+                navigator.mediaSession.setActionHandler('play', () => {
+                    this.play();
+                });
+
+                navigator.mediaSession.setActionHandler('pause', () => {
+                    this.pause();
+                });
+
+                /* Stop (supported since Chrome 77) */
+
+                try {
+                    navigator.mediaSession.setActionHandler('stop', () => {
+                        this.pause();
+                    });
+                } catch (error) {
+                    console.log('Warning! The "stop" media session action is not supported.');
+                }
+
+                /* Seek To (supported since Chrome 78) */
+
+                try {
+                    navigator.mediaSession.setActionHandler('seekto', (event) => {
+                        if (event.fastSeek && ('fastSeek' in audio)) {
+                            audio.fastSeek(event.seekTime);
+                            return;
+                        }
+                        audio.currentTime = event.seekTime;
+                    });
+                } catch (error) {
+                    console.log('Warning! The "seekto" media session action is not supported.');
+                }
             },
             async toggleFavorite() {
                 if (this.toggling) return;
@@ -456,7 +547,6 @@
             clearInterval(this.interval);
         }
     }
-    console.log("MusicPlayer 2");
 </script>
 
 <style scoped>
@@ -769,11 +859,11 @@
         box-shadow: 0 0 0 1px white;
     }
 
-    .gray{
-        opacity:0.7;
+    .gray {
+        opacity: 0.7;
     }
 
-    .play-circle{
+    .play-circle {
         transform: scale(1) !important;
         box-shadow: 0 0 0 1px white;
     }

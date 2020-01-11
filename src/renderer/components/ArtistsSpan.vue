@@ -8,7 +8,6 @@
 </template>
 
 <script>
-    console.log("ArtistsSpan 1");
     export default {
         name: "ArtistsSpan",
         props: {
@@ -18,7 +17,6 @@
             }
         }
     }
-    console.log("ArtistsSpan 2");
 </script>
 
 <style scoped>

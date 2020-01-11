@@ -117,6 +117,4 @@ const router = new VueRouter({
     routes
 })
 
-console.log("Router 1");
 export default router
-console.log("Router 2");

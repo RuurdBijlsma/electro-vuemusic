@@ -209,7 +209,7 @@
     }
 
     .album-image {
-        background-image: url('../assets/recommendation.png');
+        background-image: url('../../../public/img/recommendation.png');
         width: 150px;
         height: 150px;
         background-size: cover;

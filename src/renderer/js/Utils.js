@@ -1,7 +1,6 @@
-console.log("Utils 1");
 export default class Utils {
     static getServer() {
-        return this.isLocal() ? 'http://localhost:3000' : 'https://api.ruurd.dev';
+        return this.isLocal() ? 'http://localhost:3000' : 'https://ruurd.dev:3000';
     }
 
     static isLocal() {
@@ -44,4 +43,3 @@ export default class Utils {
         return `${track.name} - ${track.artists.map(a => a.name).join(', ')}`;
     }
 }
-console.log("Utils 2");

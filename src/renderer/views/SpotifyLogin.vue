@@ -5,7 +5,7 @@
 </template>
 
 <script>
-    import SpotifyApi from "@/js/SpotifyApi";
+    import SpotifyApi from "../js/SpotifyApi";
 
     export default {
         name: "SpotifyLoginStart",
@@ -24,10 +24,7 @@
         },
         methods: {
             getCode() {
-                let url = `${SpotifyApi.authUrl}authorize?client_id=${SpotifyApi.clientId}&response_type=code&redirect_uri=${SpotifyApi.redirectUrl}&scope=${SpotifyApi.scopes}`;
-                // let wind = window.open(url);
-                // console.log(wind);
-                location.href = url;
+                location.href = `${SpotifyApi.authUrl}authorize?client_id=${SpotifyApi.clientId}&response_type=code&redirect_uri=${SpotifyApi.redirectUrl}&scope=${SpotifyApi.scopes}`;
             },
             catchCode() {
                 let url = location.search.split('?code=');

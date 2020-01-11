@@ -14,7 +14,6 @@
 
 <script>
     import ArtistsSpan from "./ArtistsSpan";
-    console.log("Albumrow 1");
     export default {
         name: "AlbumRow",
         components: {ArtistsSpan},
@@ -37,7 +36,6 @@
                 this.image = 'img/notfound.png';
         },
     }
-    console.log("Albumrow 2");
 </script>
 
 <style scoped>

@@ -11,7 +11,6 @@
 </template>
 
 <script>
-    console.log("Trunquee 1");
     export default {
         props: {
             'text': {
@@ -78,7 +77,6 @@
             },
         },
     }
-    console.log("Trunquee 2");
 </script>
 
 <style scoped>

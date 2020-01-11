@@ -26,13 +26,14 @@
 </template>
 
 <script>
+    /* eslint-disable no-constant-condition */
+
     import TrackItem from "./TrackItem";
     import Utils from "../js/Utils";
     import SpotifyApi from "../js/SpotifyApi";
 
     const maxRender = 50;
 
-    console.log("TrackList 1");
     export default {
         name: "TrackList",
         components: {TrackItem},
@@ -161,7 +162,6 @@
             clearInterval(this.interval);
         }
     }
-    console.log("TrackList 2");
 </script>
 
 <style scoped>

@@ -10,7 +10,9 @@
 </template>
 
 <script>
-    console.log("AlbumSquare 1");
+    import baseUrl from '../../node/BaseUrl';
+    import path from 'path';
+
     export default {
         name: "AlbumSquare",
         props: {
@@ -36,22 +38,21 @@
                 this.dataAlbum = {
                     name: 'Liked Tracks',
                 };
-                this.image = 'img/liked.png';
+                this.image = path.join(baseUrl, '/img/liked.png').replace(/\\/gi, '/');
             } else if (this.type === 'category') {
                 if (this.dataAlbum.icons.length > 0)
                     this.image = this.dataAlbum.icons[0].url;
                 else
-                    this.image = 'img/notfound.png';
+                    this.image = path.join(baseUrl, '/img/notfound.png').replace(/\\/gi, '/');
             } else {
                 if (this.dataAlbum.images.length > 0)
                     this.image = this.dataAlbum.images[0].url;
                 else
-                    this.image = 'img/notfound.png';
+                    this.image = path.join(baseUrl, '/img/notfound.png').replace(/\\/gi, '/');
             }
         },
         methods: {},
     }
-    console.log("AlbumSquare 2");
 </script>
 
 <style scoped>

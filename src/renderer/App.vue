@@ -11,9 +11,22 @@
                         <span class="button-text">Spotify</span>
                     </md-button>
                 </div>
+                <div class="drag-region"></div>
                 <div class="right-content">
                     <md-button class="md-icon-button" to="/settings">
                         <md-icon>settings</md-icon>
+                    </md-button>
+                    <md-button class="md-icon-button" @click="minimize()">
+                        <md-icon>minimize</md-icon>
+                    </md-button>
+                    <md-button class="md-icon-button" v-if="fullscreen" @click="exitFullscreen">
+                        <md-icon>fullscreen_exit</md-icon>
+                    </md-button>
+                    <md-button class="md-icon-button" v-else @click="goFullscreen()">
+                        <md-icon>fullscreen</md-icon>
+                    </md-button>
+                    <md-button class="md-icon-button" @click="closeApp()">
+                        <md-icon>close</md-icon>
                     </md-button>
                 </div>
             </md-app-toolbar>
@@ -40,28 +53,46 @@
     //Visualizer that doesn't crash with hour long tracks
 
 
-    console.log("Hello");
     import SpotifyApi from "./js/SpotifyApi";
-    console.log("World");
-    import MusicPlayer from "./components/MusicPlayer.vue";
-    console.log("Goodbye");
+    import MusicPlayer from "./components/MusicPlayer";
+    import {remote} from 'electron';
 
+    let win = remote.getCurrentWindow();
 
     export default {
         name: 'home',
         components: {MusicPlayer},
-        mounted() {
-            console.log("YELL")
-            if (!SpotifyApi.authorized() && navigator.onLine){
-                // console.log("Yello");
-                // return;
-                this.$router.push('/login');
+        data() {
+            return {
+                fullscreen: false,
             }
+        },
+        mounted() {
+            if (!SpotifyApi.authorized() && navigator.onLine)
+                this.$router.push('/login');
 
             console.log(SpotifyApi);
             this.checkTrackState();
+
+            window.addEventListener('resize', () => {
+                this.fullscreen = win.isMaximized();
+            })
         },
         methods: {
+            minimize() {
+                win.minimize();
+            },
+            goFullscreen() {
+                win.maximize();
+                this.fullscreen = true;
+            },
+            exitFullscreen() {
+                win.unmaximize();
+                this.fullscreen = false;
+            },
+            closeApp() {
+                win.close();
+            },
             checkTrackState() {
                 if (this.$store.state.track === null) {
                     document.querySelector('.my-app').style.paddingBottom = '56px';
@@ -76,8 +107,6 @@
             }
         }
     }
-
-    console.log("So long")
 </script>
 
 <style>
@@ -97,6 +126,14 @@
     .toolbar {
         display: flex;
         justify-content: space-between;
+    }
+
+    .toolbar .drag-region {
+        -webkit-app-region: drag;
+        flex-grow: 2;
+        height: calc(100% - 10px);
+        top: 5px;
+        position: relative;
     }
 
     .bottom-bar {
