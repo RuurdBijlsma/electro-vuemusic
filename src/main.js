@@ -3,6 +3,7 @@ import App from './renderer/App.vue'
 import VueMaterial from 'vue-material'
 import 'vue-material/dist/vue-material.min.css'
 import './assets/vm3-theme-primary-on-dark.css'
+// import 'vue-material/dist/theme/default.css';
 import router from './renderer/router'
 import store from './renderer/store';
 import './renderer/registerServiceWorker'

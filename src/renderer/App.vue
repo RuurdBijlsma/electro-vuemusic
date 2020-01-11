@@ -86,6 +86,8 @@
     //Improve now playing for big screens
     //Improve loading of liked songs
     //Titel van song te lang in song list? it's bad
+    //Prompt youtube api key and spotify secret and create file to remember them.
+    //Fix seek/volume bars for white theme
 
 
     import SpotifyApi from "./js/SpotifyApi";

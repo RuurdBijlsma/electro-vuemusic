@@ -562,7 +562,7 @@
         height: 106px;
         display: flex;
         flex-direction: column;
-        background-color: #3b3b3b !important;
+        background-image: linear-gradient(45deg, #7d7d7d33, #7d7d7d33);
         padding: 8px;
         z-index: 2;
     }
