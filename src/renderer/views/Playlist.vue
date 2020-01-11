@@ -1,7 +1,8 @@
 <template>
     <div v-if="playlist!==null">
         <div class="info-preview">
-            <div class="playlist-image" v-if="playlist.images.length > 0" :style="`background-image: url(${playlist.images[0].url})`"></div>
+            <div class="playlist-image" v-if="playlist.images.length > 0"
+                 :style="`background-image: url(${playlist.images[0].url})`"></div>
             <p class="md-title">
                 <md-button class="md-icon-button" @click="toggleFavorite">
                     <md-icon v-if="favorite">favorite</md-icon>
@@ -34,24 +35,27 @@
             }
         },
         async mounted() {
-            if (!this.$route.query.hasOwnProperty('id')) {
-                await this.$router.push('/');
-                return;
-            }
-
-            let id = this.$route.query.id;
-            this.trackRetrieve = async (offset, limit) => (await SpotifyApi.api.getPlaylist(id, {
-                offset,
-                limit
-            })).tracks.items.map(item => item.track);
-
-            this.playlist = await SpotifyApi.api.getPlaylist(id);
-
-            let me = await SpotifyApi.api.getMe();
-            let favorite = await SpotifyApi.api.areFollowingPlaylist(id, [me.id]);
-            this.favorite = favorite[0];
+            this.init();
         },
         methods: {
+            async init() {
+                if (!this.$route.query.hasOwnProperty('id')) {
+                    await this.$router.push('/');
+                    return;
+                }
+
+                let id = this.$route.query.id;
+                this.trackRetrieve = async (offset, limit) => (await SpotifyApi.api.getPlaylist(id, {
+                    offset,
+                    limit
+                })).tracks.items.map(item => item.track);
+
+                this.playlist = await SpotifyApi.api.getPlaylist(id);
+
+                let me = await SpotifyApi.api.getMe();
+                let favorite = await SpotifyApi.api.areFollowingPlaylist(id, [me.id]);
+                this.favorite = favorite[0];
+            },
             async toggleFavorite() {
                 if (this.toggling) return;
                 this.toggling = true;
@@ -66,6 +70,15 @@
                 }
                 this.toggling = false;
             },
+        },
+        watch: {
+            $route() {
+                this.playlist = null;
+                this.trackRetrieve = null;
+                this.favorite = false;
+                this.toggling = false;
+                this.init();
+            }
         }
     }
 </script>

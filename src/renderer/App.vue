@@ -8,7 +8,7 @@
                     </md-button>
                     <md-button to="/">
                         <md-icon>music_note</md-icon>
-                        <span class="button-text">Spotify</span>
+                        <span class="button-text">VueMusic</span>
                     </md-button>
                 </div>
                 <div class="drag-region"></div>
@@ -30,7 +30,7 @@
                     </md-button>
                 </div>
             </md-app-toolbar>
-            <md-app-drawer md-permanent="full" class="drawer md-scrollbar" >
+            <md-app-drawer md-permanent="full" class="drawer md-scrollbar">
                 <md-list>
                     <md-list-item to="/" exact>
                         <md-icon>home</md-icon>
@@ -58,7 +58,8 @@
                     </md-list-item>
 
                     <md-subheader class="smol-subheader" v-if="playlists.length > 0">Playlists</md-subheader>
-                    <md-list-item :to="`/playlist?id=${playlist.id}`" v-for="playlist in playlists" :key="playlist.id"
+                    <md-list-item exact :to="`/playlist?id=${playlist.id}`" v-for="playlist in playlists"
+                                  :key="playlist.id"
                                   class="playlist-list-item">
                         <span class="md-list-item-text">{{playlist.name}}</span>
                     </md-list-item>
@@ -84,6 +85,7 @@
     //Add side bar when window is wide enough
     //Improve now playing for big screens
     //Improve loading of liked songs
+    //Titel van song te lang in song list? it's bad
 
 
     import SpotifyApi from "./js/SpotifyApi";

@@ -34,7 +34,7 @@
                     <md-menu-item v-if="lite && isFavorite" @click="toggleFavorite">Remove from saved tracks
                     </md-menu-item>
                     <md-menu-item v-if="lite && !isFavorite" @click="toggleFavorite">Add to saved tracks</md-menu-item>
-                    <md-menu-item :to="`/radio?seed_tracks=${track.id}`" >Song radio</md-menu-item>
+                    <md-menu-item exact :to="`/radio?seed_tracks=${track.id}`" >Song radio</md-menu-item>
                     <md-menu-item v-if="track.hasOwnProperty('album')" :to="`/album?id=${track.album.id}`">
                         Go to album
                     </md-menu-item>

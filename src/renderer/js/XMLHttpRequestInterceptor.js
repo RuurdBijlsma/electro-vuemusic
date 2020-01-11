@@ -1,3 +1,5 @@
+import SpotifyApi from "./SpotifyApi";
+
 export default class XMLHttpRequestInterceptor {
     constructor() {
         this.options = {
@@ -18,6 +20,10 @@ export default class XMLHttpRequestInterceptor {
     }
 
     async sendLive() {
+        if(!SpotifyApi.authorized()){
+            let refresh = await SpotifyApi.refreshToken();
+            SpotifyApi.saveRefresh(refresh);
+        }
         let response = await fetch(this.url, this.options);
         this.readyState = 4;
         this.status = response.status;
