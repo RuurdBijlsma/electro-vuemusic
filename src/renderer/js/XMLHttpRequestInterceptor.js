@@ -20,7 +20,7 @@ export default class XMLHttpRequestInterceptor {
     }
 
     async sendLive() {
-        if(!SpotifyApi.authorized()){
+        if (!SpotifyApi.authorized() && SpotifyApi.auth.refresh !== null) {
             let refresh = await SpotifyApi.refreshToken();
             SpotifyApi.saveRefresh(refresh);
         }

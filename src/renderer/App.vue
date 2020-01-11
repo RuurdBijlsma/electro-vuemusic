@@ -103,22 +103,35 @@
             return {
                 fullscreen: false,
                 playlists: [],
+                routeHistory: [],
             }
         },
         async mounted() {
-            if (!SpotifyApi.authorized() && navigator.onLine)
-                this.$router.push('/login');
-
-            console.log(SpotifyApi);
-            this.checkTrackState();
-
             window.addEventListener('resize', () => {
                 this.fullscreen = win.isMaximized();
             });
 
-            this.playlists = (await SpotifyApi.api.getUserPlaylists()).items;
+            document.addEventListener('keypress', e => {
+                if (e.key === '`') {
+                    remote.getCurrentWindow().openDevTools();
+                }
+                if (e.key === 'r' && e.ctrlKey)
+                    location.reload();
+            });
+
+            this.init();
         },
         methods: {
+            async init() {
+                if (!SpotifyApi.authorized() && navigator.onLine)
+                    this.$router.push('/login');
+
+                console.log(SpotifyApi);
+                this.checkTrackState();
+
+                this.playlists = (await SpotifyApi.api.getUserPlaylists()).items;
+                console.log('playlists in app.vue', this.playlists)
+            },
             minimize() {
                 win.minimize();
             },
@@ -144,6 +157,14 @@
         watch: {
             '$store.state.track'() {
                 this.checkTrackState();
+            },
+            $route() {
+                if (this.routeHistory[this.routeHistory.length - 1] === '/login') {
+                    //Coming from login page
+                    this.init();
+                }
+                this.routeHistory.push(this.$route.path);
+                console.log("HISTORY", this.routeHistory);
             }
         }
     }

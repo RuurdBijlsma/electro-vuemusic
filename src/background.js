@@ -1,6 +1,7 @@
 'use strict';
 
-import {app, protocol, BrowserWindow} from 'electron'
+import {app, protocol, BrowserWindow} from 'electron';
+import isDev from 'electron-is-dev';
 import {
     createProtocol,
     installVueDevtools
@@ -22,7 +23,7 @@ protocol.registerSchemesAsPrivileged([{scheme: 'app', privileges: {secure: true,
 function createWindow() {
     // Create the browser window.
 
-    let icon = path.join(__static, 'img/icon-large.png');
+    let icon = path.join(__static, isDev ? 'img/dev-icon.png' : 'img/icon-large.png');
     console.log("ICON", icon);
     win = new BrowserWindow({
         width: 1000,
