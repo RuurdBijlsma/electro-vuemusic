@@ -30,8 +30,11 @@ export default class VmModule {
             console.log("Created stream", stream);
 
             stream.on('info', info => {
-                let formats = info.formats.sort((a, b) => b.averageBitrate - a.averageBitrate).sort((a, b) => b.audioBitrate - a.audioBitrate);
-                console.log("Found song url: ", formats[0].url);
+                let formats = info.formats
+                    .sort((a, b) => b.averageBitrate - a.averageBitrate)
+                    .sort((a, b) => b.audioBitrate - a.audioBitrate)
+                    .sort((a, b) => b.mimeType.startsWith('audio') - a.mimeType.startsWith('audio'));
+                console.log("Found song, format: ", formats[0], formats);
                 resolve(formats[0].url);
             });
 

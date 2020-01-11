@@ -23,12 +23,12 @@ function createWindow() {
     // Create the browser window.
 
     let icon = path.join(__static, 'img/icon-large.png');
-    console.log("ICON",icon);
+    console.log("ICON", icon);
     win = new BrowserWindow({
-        width: 1800,
-        height: 1000,
+        width: 1000,
+        height: 800,
         icon,
-        frame:false,
+        frame: false,
         backgroundColor: '#212121',
         webPreferences: {
             webSecurity: false,

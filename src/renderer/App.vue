@@ -46,11 +46,7 @@
 
 <script>
     //TODO:
-    //better offline-only support
-
-    //Intercontinental Ballistic Long Range TODO:
-    //Chromecast support
-    //Visualizer that doesn't crash with hour long tracks
+    //Some songs are silent???
 
 
     import SpotifyApi from "./js/SpotifyApi";
