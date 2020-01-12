@@ -19,7 +19,13 @@
                     <div class="down">
                         <p class="md-headline">{{track.name}}</p>
                         <artists-span :artists="track.artists"/>
-                        <md-button class="md-icon-button page-local">
+                        <md-button class="md-icon-button page-local" v-if="local">
+                            <md-icon>
+                                cloud_download
+                            </md-icon>
+                            <md-tooltip>Playing offline</md-tooltip>
+                        </md-button>
+                        <md-button class="md-icon-button page-local" v-else>
                             <md-icon>
                                 wifi_tethering
                             </md-icon>
@@ -83,7 +89,13 @@
                         <span class="dot">•</span>
                         <artists-span :artists="track.artists"/>
                     </div>
-                    <md-button class="md-icon-button local-icon">
+                    <md-button class="md-icon-button local-icon" v-if="local">
+                        <md-icon>
+                            cloud_download
+                        </md-icon>
+                        <md-tooltip md-direction="top">Playing offline</md-tooltip>
+                    </md-button>
+                    <md-button class="md-icon-button local-icon" v-else>
                         <md-icon>
                             wifi_tethering
                         </md-icon>
@@ -202,6 +214,7 @@
                 shuffle: false,
                 repeat: true,
                 volume: 1,
+                local: false,
             }
         },
         mounted() {
@@ -337,6 +350,7 @@
                     this.setTrackMetaData(track);
 
                     let url = await SpotifyApi.getUrl(Utils.trackToQuery(track));
+                    this.local = url.includes('file://');
                     console.log(url);
                     audio.src = url;
                     audio.onended = () => this.skip(1);

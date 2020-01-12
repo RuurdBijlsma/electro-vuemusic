@@ -1,7 +1,7 @@
 import ytdl from "ytdl-core";
 import fs from "fs";
-import {youtubeSecret} from "../assets/secrets.json";
 import youtubeSearch from "youtube-search";
+import Credentials from "../renderer/js/Credentials";
 
 class Youtube {
     constructor() {
@@ -92,7 +92,7 @@ class Youtube {
     }
 
     async searchYt(query, maxResults = 5, category) {
-        const key = youtubeSecret.key;
+        const key = Credentials.youtubeKey;
         console.log('Youtube', "Search:", query);
 
         return new Promise((resolve, error) => {

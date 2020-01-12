@@ -2,6 +2,7 @@
 node_modules
 /dist
 secrets.json
+credentials.json
 /songs/
 # local env files
 .env.local

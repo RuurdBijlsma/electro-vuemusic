@@ -71,6 +71,11 @@ class SpotifyApi {
         this.saveAuth();
     }
 
+    async fullRefresh() {
+        let token = await this.refreshToken();
+        this.saveRefresh(token);
+    }
+
     async refreshToken() {
         if (this.auth.refresh === null) {
             console.warn("No refresh code set");

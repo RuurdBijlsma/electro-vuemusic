@@ -1,8 +1,6 @@
 <template>
     <div class="track-item">
-        <div class="left-content" :style="`
-            width: ${lite?'calc(100vw - 110px)':'calc(100vw - 140px)'};
-        `">
+        <div :class="`left-content${lite?' lite':''}`">
             <md-icon class="md-primary active-icon"
                      v-if=" $store.state.track !== null && $store.state.track.id === track.id">volume_up
             </md-icon>
@@ -34,7 +32,7 @@
                     <md-menu-item v-if="lite && isFavorite" @click="toggleFavorite">Remove from saved tracks
                     </md-menu-item>
                     <md-menu-item v-if="lite && !isFavorite" @click="toggleFavorite">Add to saved tracks</md-menu-item>
-                    <md-menu-item exact :to="`/radio?seed_tracks=${track.id}`" >Song radio</md-menu-item>
+                    <md-menu-item exact :to="`/radio?seed_tracks=${track.id}`">Song radio</md-menu-item>
                     <md-menu-item v-if="track.hasOwnProperty('album')" :to="`/album?id=${track.album.id}`">
                         Go to album
                     </md-menu-item>
@@ -154,6 +152,20 @@
         justify-content: left;
         width: calc(100vw - 140px);
         text-align: left;
+    }
+
+    .left-content.lite {
+        width: calc(100vw - 110px);
+    }
+
+    @media (min-width: 600px) {
+        .left-content {
+            width: calc(100vw - 340px);
+        }
+
+        .left-content.lite {
+            width: calc(100vw - 310px);
+        }
     }
 
     .right-content {

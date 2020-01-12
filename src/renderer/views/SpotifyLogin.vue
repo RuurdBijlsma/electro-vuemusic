@@ -6,10 +6,14 @@
 
 <script>
     import SpotifyApi from "../js/SpotifyApi";
+    import Credentials from "../js/Credentials";
 
     export default {
         name: "SpotifyLoginStart",
         async mounted() {
+            if(!Credentials.imported && !Credentials.importing)
+                await Credentials.importFromFile();
+
             if (SpotifyApi.auth.refresh !== null) {
                 this.refreshToken();
                 return;

@@ -81,19 +81,19 @@
 
 <script>
     //TODO:
-    //Volume knob change function
-    //Add side bar when window is wide enough
     //Improve now playing for big screens
     //Improve loading of liked songs
-    //Titel van song te lang in song list? it's bad
     //Prompt youtube api key and spotify secret and create file to remember them.
     //Fix seek/volume bars for white theme
+    //Now playing is BAD with electron version
 
 
     import SpotifyApi from "./js/SpotifyApi";
     import MusicPlayer from "./components/MusicPlayer";
     import {remote} from 'electron';
+    import Credentials from "./js/Credentials";
 
+    console.log(Credentials, SpotifyApi);
     let win = remote.getCurrentWindow();
 
     export default {
@@ -123,8 +123,19 @@
         },
         methods: {
             async init() {
-                if (!SpotifyApi.authorized() && navigator.onLine)
-                    this.$router.push('/login');
+                if (!Credentials.filled()) {
+                    await this.$router.push('/settings');
+                    return;
+                }
+                if (!SpotifyApi.authorized() && navigator.onLine) {
+                    if (SpotifyApi.auth.refresh !== null) {
+                        console.log("Doing short refresh token :)");
+                        await SpotifyApi.fullRefresh();
+                    } else {
+                        await this.$router.push('/login');
+                        return;
+                    }
+                }
 
                 console.log(SpotifyApi);
                 this.checkTrackState();
@@ -159,7 +170,8 @@
                 this.checkTrackState();
             },
             $route() {
-                if (this.routeHistory[this.routeHistory.length - 1] === '/login') {
+                let hist = this.routeHistory[this.routeHistory.length - 1];
+                if (hist && (hist.includes('login') || hist.includes('settings'))) {
                     //Coming from login page
                     this.init();
                 }
