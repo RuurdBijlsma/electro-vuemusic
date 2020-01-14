@@ -1,1 +1,1 @@
-export default __static;
+export let baseUrl = __static;

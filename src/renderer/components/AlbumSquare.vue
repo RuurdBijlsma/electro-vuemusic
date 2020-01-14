@@ -10,7 +10,7 @@
 </template>
 
 <script>
-    import baseUrl from '../../node/BaseUrl';
+    import {baseUrl} from '../../node/BaseUrl';
     import path from 'path';
 
     export default {

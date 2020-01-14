@@ -189,9 +189,7 @@
     import TrackList from "./TrackList";
     import path from 'path';
     import {remote} from 'electron';
-    import baseUrl from '../../node/BaseUrl.mjs';
-
-    console.log({baseUrl})
+    import {baseUrl} from '../../node/BaseUrl.mjs';
 
     export default {
         name: "MusicPlayer",
@@ -348,9 +346,16 @@
             },
             async loadSong(track) {
                 return new Promise(async resolve => {
-
+                    this.local = false;
                     let mainAudio = this.mainAudio;
                     let secondAudio = this.secondAudio;
+
+                    let resume = false;
+                    if (!mainAudio.paused) {
+                        resume = true;
+                        mainAudio.pause();
+                    }
+
                     this.loadingAudio = true;
                     this.setTrackMetaData(track);
                     mainAudio.oncanplay = () => {
@@ -361,11 +366,6 @@
                     let url = await SpotifyApi.getUrl(Utils.trackToQuery(track));
                     this.local = url.includes('file://');
                     console.log(url);
-                    let resume = false;
-                    if (!mainAudio.paused) {
-                        resume = true;
-                        mainAudio.pause();
-                    }
 
                     secondAudio.src = url;
                     secondAudio.onended = () => this.skip(1);

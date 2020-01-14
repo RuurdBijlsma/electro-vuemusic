@@ -2,6 +2,7 @@ import ytdl from "ytdl-core";
 import fs from "fs";
 import youtubeSearch from "youtube-search";
 import Credentials from "../renderer/js/Credentials";
+// import taglib from 'taglib2';
 
 class Youtube {
     constructor() {
@@ -26,6 +27,7 @@ class Youtube {
                     console.log("Youtube", "Download FINISHED ", destinationFile);
                     console.log("Renaming temp file to normal file");
                     fs.rename(destinationFile + '.temp', destinationFile, err => {
+
                         if (err) console.warn("Youtube", "Could not rename destination file", destinationFile);
                         resolve(downloaded);
                     });
