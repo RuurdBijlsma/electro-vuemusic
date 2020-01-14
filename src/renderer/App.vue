@@ -246,6 +246,6 @@
     .music-player {
         position: fixed;
         bottom: 0;
-        z-index: 2;
+        z-index: 3;
     }
 </style>

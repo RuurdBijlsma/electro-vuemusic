@@ -1,6 +1,7 @@
 <template>
     <div>
         <audio ref="audio"/>
+        <audio ref="audio2"/>
         <div class="music-player" v-if="track !== null && queue.length > 0">
             <md-content :class="`player-page${fullPage ? ' show-full-page' : ''}`">
                 <div class="background-blur" :style="`background-image: url(${track.album.images[0].url})`"></div>
@@ -34,7 +35,7 @@
 
                         <div class="complete-seek">
                             <div class="track-time" v-if="$refs.hasOwnProperty('audio')">
-                                {{toHms($refs.audio.currentTime)}}
+                                {{toHms(mainAudio.currentTime)}}
                             </div>
                             <div class="seek-container seek-page" ref="seekContainerPage" @mousedown="down"
                                  @touchstart="down($event.touches[0])">
@@ -46,7 +47,7 @@
                                 </md-content>
                             </div>
                             <div class="track-time">
-                                {{($refs.hasOwnProperty('audio') && $refs.audio.duration) ? toHms($refs.audio.duration)
+                                {{($refs.hasOwnProperty('audio') && mainAudio.duration) ? toHms(mainAudio.duration)
                                 : ''}}
                             </div>
                         </div>
@@ -133,7 +134,7 @@
 
                         <div class="complete-seek">
                             <div class="track-time" v-if="$refs.hasOwnProperty('audio') && windowWidth > 600">
-                                {{toHms($refs.audio.currentTime)}}
+                                {{toHms(mainAudio.currentTime)}}
                             </div>
                             <div class="seek-container" ref="seekContainer"
                                  :style="`width: ${windowWidth > 600 ? 'calc(100% - 110px)' : '100%'}`"
@@ -147,7 +148,7 @@
                                 </md-content>
                             </div>
                             <div class="track-time" v-if="windowWidth > 600">
-                                {{($refs.hasOwnProperty('audio') && $refs.audio.duration) ? toHms($refs.audio.duration)
+                                {{($refs.hasOwnProperty('audio') && mainAudio.duration) ? toHms(mainAudio.duration)
                                 : ''}}
                             </div>
                         </div>
@@ -197,6 +198,8 @@
         components: {TrackList, ArtistsSpan},
         data() {
             return {
+                mainAudio: this.$refs.audio,
+                secondAudio: this.$refs.audio2,
                 windowWidth: innerWidth,
                 fullPage: false,
                 track: null,
@@ -218,6 +221,8 @@
             }
         },
         mounted() {
+            this.mainAudio = this.$refs.audio;
+            this.secondAudio = this.$refs.audio2;
             if (this.queue.length === 0 && localStorage.getItem('queue') !== null)
                 this.$store.commit('setQueue', JSON.parse(localStorage.queue));
 
@@ -234,7 +239,6 @@
             if (localStorage.getItem('volume') !== null)
                 this.volume = JSON.parse(localStorage.volume);
 
-            let audio = this.$refs.audio;
             console.log(path.join(baseUrl, '/img/playicon.png'));
 
             let playIcon = {
@@ -270,13 +274,13 @@
             let win = remote.getCurrentWindow();
             let thumbAdded = win.setThumbarButtons(this.pausedIcons);
             console.log("Thumbbar buttons were added?", thumbAdded);
-            audio.onplay = () => {
+            this.mainAudio.onplay = () => {
                 navigator.mediaSession.playbackState = 'playing';
                 let thumbAdded = win.setThumbarButtons(this.playingIcons);
                 console.log("Thumbbar buttons were added?", thumbAdded);
                 this.playing = true;
             };
-            audio.onpause = () => {
+            this.mainAudio.onpause = () => {
                 navigator.mediaSession.playbackState = 'paused';
                 let thumbAdded = win.setThumbarButtons(this.pausedIcons);
                 console.log("Thumbbar buttons were added?", thumbAdded);
@@ -284,10 +288,10 @@
             };
 
             this.interval = setInterval(() => {
-                if (!audio.duration)
+                if (!this.mainAudio.duration)
                     this.seekProgress = 0;
                 else {
-                    this.seekProgress = audio.currentTime / audio.duration;
+                    this.seekProgress = this.mainAudio.currentTime / this.mainAudio.duration;
                     this.setMediaPosition();
                 }
             }, 1000 / 30);
@@ -321,12 +325,11 @@
                     let x = e.pageX - container.offsetLeft;
                     let progress = x / container.offsetWidth;
                     progress = Math.min(1, Math.max(0, progress));
-                    let audio = this.$refs.audio;
-                    if (audio.duration) {
-                        if (audio.hasOwnProperty('fastSeek')) {
-                            audio.fastSeek(audio.duration * progress);
+                    if (this.mainAudio.duration) {
+                        if (this.mainAudio.hasOwnProperty('fastSeek')) {
+                            this.mainAudio.fastSeek(this.mainAudio.duration * progress);
                         } else {
-                            audio.currentTime = audio.duration * progress;
+                            this.mainAudio.currentTime = this.mainAudio.duration * progress;
                         }
                     }
                 }
@@ -345,33 +348,64 @@
             },
             async loadSong(track) {
                 return new Promise(async resolve => {
-                    let audio = this.$refs.audio;
+
+                    let mainAudio = this.mainAudio;
+                    let secondAudio = this.secondAudio;
                     this.loadingAudio = true;
                     this.setTrackMetaData(track);
+                    mainAudio.oncanplay = () => {
+                    };
+                    mainAudio.onended = () => {
+                    };
 
                     let url = await SpotifyApi.getUrl(Utils.trackToQuery(track));
                     this.local = url.includes('file://');
                     console.log(url);
-                    audio.src = url;
-                    audio.onended = () => this.skip(1);
-                    audio.oncanplay = () => {
+                    let resume = false;
+                    if (!mainAudio.paused) {
+                        resume = true;
+                        mainAudio.pause();
+                    }
+
+                    secondAudio.src = url;
+                    secondAudio.onended = () => this.skip(1);
+
+                    secondAudio.oncanplay = () => {
+                        this.mainAudio = secondAudio;
+                        this.secondAudio = mainAudio;
+
+                        this.mainAudio.onplay = () => {
+                            navigator.mediaSession.playbackState = 'playing';
+                            this.playing = true;
+                        };
+                        this.mainAudio.onpause = () => {
+                            navigator.mediaSession.playbackState = 'paused';
+                            this.playing = false;
+                        };
+                        this.secondAudio.onpause = () => {
+                        };
+                        this.secondAudio.onplay = () => {
+                        };
+
+                        if (resume)
+                            this.mainAudio.play();
                         this.loadingAudio = false;
                         resolve();
-                    }
+                    };
                 });
             },
             async play() {
-                await this.$refs.audio.play();
+                await this.mainAudio.play();
             },
             async pause() {
-                this.$refs.audio.pause();
+                this.mainAudio.pause();
             },
             async skip(n) {
-                if (n === -1 && this.$refs.audio.currentTime > 5) {
-                    this.$refs.audio.currentTime = 0;
+                if (n === -1 && this.mainAudio.currentTime > 5) {
+                    this.mainAudio.currentTime = 0;
                     return;
                 }
-                this.$refs.audio.pause();
+                this.mainAudio.pause();
                 let currentIndex = this.getTrackIndex(this.track);
                 let newIndex = (currentIndex + n) % this.queue.length;
                 if (newIndex < 0)
@@ -386,17 +420,16 @@
                 return queue.findIndex(t => t.id === track.id);
             },
             setMediaPosition() {
-                let audio = this.$refs.audio;
-                if (audio.duration && navigator.mediaSession.hasOwnProperty('setPositionState')) {
+                if (this.mainAudio.duration && navigator.mediaSession.hasOwnProperty('setPositionState')) {
                     navigator.mediaSession.setPositionState({
-                        duration: audio.duration,
+                        duration: this.mainAudio.duration,
                         playbackRate: 1,
-                        position: audio.currentTime,
+                        position: this.mainAudio.currentTime,
                     })
                 }
             },
             setTrackMetaData(track) {
-                let audio = this.$refs.audio;
+
                 let artistsString = track.artists.map(a => a.name).join(', ');
                 document.title = track.name + ' - ' + artistsString;
                 // document.querySelector('meta[name="theme-color"').content = track.color;
@@ -443,12 +476,12 @@
 
                 navigator.mediaSession.setActionHandler('seekbackward', (event) => {
                     const skipTime = event.seekOffset || defaultSkipTime;
-                    audio.currentTime = Math.max(audio.currentTime - skipTime, 0);
+                    this.mainAudio.currentTime = Math.max(this.mainAudio.currentTime - skipTime, 0);
                 });
 
                 navigator.mediaSession.setActionHandler('seekforward', (event) => {
                     const skipTime = event.seekOffset || defaultSkipTime;
-                    audio.currentTime = Math.min(audio.currentTime + skipTime, audio.duration);
+                    this.mainAudio.currentTime = Math.min(this.mainAudio.currentTime + skipTime, this.mainAudio.duration);
                 });
 
                 /* Play & Pause */
@@ -476,10 +509,10 @@
                 try {
                     navigator.mediaSession.setActionHandler('seekto', (event) => {
                         if (event.fastSeek && ('fastSeek' in audio)) {
-                            audio.fastSeek(event.seekTime);
+                            this.mainAudio.fastSeek(event.seekTime);
                             return;
                         }
-                        audio.currentTime = event.seekTime;
+                        this.mainAudio.currentTime = event.seekTime;
                     });
                 } catch (error) {
                     console.log('Warning! The "seekto" media session action is not supported.');
@@ -531,7 +564,8 @@
             },
             volume() {
                 localStorage.volume = this.volume;
-                this.$refs.audio.volume = this.volume;
+                this.mainAudio.volume = this.volume;
+                this.secondAudio.volume = this.volume;
             },
             '$store.state.queue'() {
                 //Only triggers on actual queue change, so shuffling here is fine
