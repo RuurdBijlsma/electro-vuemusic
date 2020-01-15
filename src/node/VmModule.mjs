@@ -7,10 +7,12 @@ import fs from 'fs';
 
 export default class VmModule {
     constructor() {
-        const app = electron.remote.app;
+        let app = electron.app;
+        if (electron.hasOwnProperty('remote')) {
+            app = electron.remote.app;
+        }
         let dir = path.join(app.getPath('music'), 'vuemusic');
-        if (!fs.existsSync(dir))
-            fs.mkdirSync(dir);
+        // const app = electron.remote.app;
         cacher.songDirectory = dir;
         console.log("CACHER SONGDIRECTORY", cacher.songDirectory);
         cacher.createDir();

@@ -1,3 +1,4 @@
+import electron from "electron";import path from "path";import fs from "fs";
 <template>
     <div id="app">
         <md-app class="my-app" md-mode="fixed">
@@ -90,8 +91,33 @@
 
     import SpotifyApi from "./js/SpotifyApi";
     import MusicPlayer from "./components/MusicPlayer";
-    import {remote} from 'electron';
+    import electron from 'electron';
     import Credentials from "./js/Credentials";
+    import path from 'path';
+    import fs from 'fs';
+
+    const remote = electron.remote;
+
+    //Handle localStorage to file sync
+    let app = electron.app;
+    if (electron.hasOwnProperty('remote'))
+        app = electron.remote.app;
+    let dir = path.join(app.getPath('music'), 'vuemusic');
+    setInterval(() => {
+        let data = JSON.stringify(localStorage);
+        fs.writeFileSync(localStorageFile, data);
+    }, 3000);
+    let localStorageFile = path.join(dir, 'localStorage.json');
+    if (fs.existsSync(localStorageFile)) {
+        let ls = JSON.parse(fs.readFileSync(localStorageFile));
+        for (let key in ls)
+            if (ls.hasOwnProperty(key) && localStorage.getItem(key) === null) {
+                console.log("Importing localStorage ", key, "from file");
+                localStorage[key] = ls[key];
+            } else {
+                console.log("NOT importing localStorage", key, "from file");
+            }
+    }
 
     console.log(Credentials, SpotifyApi);
     let win = remote.getCurrentWindow();

@@ -3,6 +3,9 @@ import SpotifyWebApi from 'spotify-web-api-js';
 import Utils from "./Utils";
 import SpotifyModule from "./SpotifyModule";
 import VmModule from "../../node/VmModule";
+import path from "path";
+import fs from "fs";
+import electron from "electron";
 
 class SpotifyApi {
     constructor() {
