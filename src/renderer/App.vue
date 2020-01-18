@@ -114,23 +114,10 @@
             }
         },
         async mounted() {
-            let prevSize = window.innerWidth;
-            let overWrite = window.innerWidth;
-
             window.addEventListener('resize', () => {
                 this.fullscreen = win.isMaximized();
                 this.windowWidth = window.innerWidth;
-                if (prevSize >= 600 && this.windowWidth < 600 || overWrite && overWrite < 600) {
-                    console.log("RESIZE TO SMOL");
-                    // Resize to smol version
-                    document.querySelector('.my-app').style.paddingBottom = '162px';
-                } else if (prevSize < 600 && this.windowWidth >= 600 || overWrite && overWrite >= 600) {
-                    console.log("RESIZE TO BIG");
-                    // Resize to big version
-                    document.querySelector('.my-app').style.paddingBottom = '106px';
-                }
-                overWrite = false;
-                prevSize = this.windowWidth;
+                this.updateBottomPadding();
             });
 
             document.addEventListener('keypress', e => {
@@ -142,8 +129,27 @@
             });
 
             this.init();
+            //Being sure bottom padding is correct, it's overwritten somewhere after this function by vue-material
+            this.updateBottomPadding();
+            setTimeout(() => {
+                this.updateBottomPadding();
+            }, 10);
+            setTimeout(() => {
+                this.updateBottomPadding();
+            }, 100);
         },
         methods: {
+            updateBottomPadding() {
+                let element = document.querySelector('.my-app');
+                let currentPadding = element.style.paddingBottom;
+                if (this.windowWidth >= 600 && currentPadding !== '106px') {
+                    console.log("RESIZE TO BIG");
+                    element.style.paddingBottom = '106px';
+                } else if (this.windowWidth < 600 && currentPadding !== '162px') {
+                    console.log("RESIZE TO SMOL");
+                    element.style.paddingBottom = '162px';
+                }
+            },
             async init() {
                 if (!Credentials.filled()) {
                     await this.$router.push('/settings');
