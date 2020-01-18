@@ -67,6 +67,10 @@ class Cacher {
                 this.cachingSongs.splice(this.cachingSongs.indexOf(query), 1);
                 resolve(true);
                 this.fire('query' + query);
+            }).catch(e => {
+                console.warn('yt download err', e);
+                this.cachingSongs.splice(this.cachingSongs.indexOf(query), 1);
+                resolve(false);
             });
         });
     }
