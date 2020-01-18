@@ -216,9 +216,10 @@
                 repeat: true,
                 volume: 1,
                 local: false,
+                win: null,
             }
         },
-        props:{
+        props: {
             wide: {
                 type: Boolean,
                 default: false,
@@ -275,21 +276,9 @@
             };
             this.playingIcons = [prevIcon, pauseIcon, nextIcon];
             this.pausedIcons = [prevIcon, playIcon, nextIcon];
-            let win = remote.getCurrentWindow();
-            let thumbAdded = win.setThumbarButtons(this.pausedIcons);
+            this.win = remote.getCurrentWindow();
+            let thumbAdded = this.win.setThumbarButtons(this.pausedIcons);
             console.log("Thumbbar buttons were added?", thumbAdded);
-            this.mainAudio.onplay = () => {
-                navigator.mediaSession.playbackState = 'playing';
-                let thumbAdded = win.setThumbarButtons(this.playingIcons);
-                console.log("Thumbbar buttons were added?", thumbAdded);
-                this.playing = true;
-            };
-            this.mainAudio.onpause = () => {
-                navigator.mediaSession.playbackState = 'paused';
-                let thumbAdded = win.setThumbarButtons(this.pausedIcons);
-                console.log("Thumbbar buttons were added?", thumbAdded);
-                this.playing = false;
-            };
 
             this.interval = setInterval(() => {
                 if (!this.mainAudio.duration)
@@ -382,12 +371,15 @@
 
                         this.mainAudio.onplay = () => {
                             navigator.mediaSession.playbackState = 'playing';
+                            this.win.setThumbarButtons(this.playingIcons);
                             this.playing = true;
                         };
                         this.mainAudio.onpause = () => {
                             navigator.mediaSession.playbackState = 'paused';
+                            this.win.setThumbarButtons(this.pausedIcons);
                             this.playing = false;
                         };
+
                         this.secondAudio.onpause = () => {
                         };
                         this.secondAudio.onplay = () => {
@@ -621,7 +613,7 @@
         z-index: 2;
     }
 
-    .player-bar.wide-window{
+    .player-bar.wide-window {
         transform: translateY(0px);
     }
 

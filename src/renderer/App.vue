@@ -137,6 +137,9 @@
             setTimeout(() => {
                 this.updateBottomPadding();
             }, 100);
+            this.windowInterval = setInterval(() => {
+                this.updateBottomPadding();
+            }, 500);
         },
         methods: {
             updateBottomPadding() {
