@@ -116,7 +116,9 @@
         async mounted() {
             let prevSize = window.innerWidth;
             let overWrite = window.innerWidth;
-            this.windowInterval = setInterval(() => {
+
+            window.addEventListener('resize', () => {
+                this.fullscreen = win.isMaximized();
                 this.windowWidth = window.innerWidth;
                 if (prevSize >= 600 && this.windowWidth < 600 || overWrite && overWrite < 600) {
                     console.log("RESIZE TO SMOL");
@@ -129,10 +131,6 @@
                 }
                 overWrite = false;
                 prevSize = this.windowWidth;
-            }, 1000 / 10);
-
-            window.addEventListener('resize', () => {
-                this.fullscreen = win.isMaximized();
             });
 
             document.addEventListener('keypress', e => {
