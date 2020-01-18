@@ -91,13 +91,16 @@ class Youtube extends EventEmitter {
                     if (spotifyTrack.hasOwnProperty('album'))
                         tags.album = spotifyTrack.album.name;
                     console.log("FFMPEGing file metadata", tags);
-                    await this.ffmpegMetadata(tempFile, destinationFile, tags);
-                    console.log("Deleting temp file", tempFile);
-                    fs.unlink(tempFile, (err) => {
-                        if (err)
-                            console.warn("Could not delete temp file", tempFile, err);
-                        resolve(downloaded);
-                    });
+                    await this.ffmpegMetadata(tempFile, tempFile + '.ffmpeg.mp3', tags);
+                    console.log("Renaming temp ffmpeg file to destination file");
+                    fs.rename(tempFile + '.ffmpeg.mp3', destinationFile, err => {
+                        console.log("Deleting temp file", tempFile);
+                        fs.unlink(tempFile, (err) => {
+                            if (err)
+                                console.warn("Could not delete temp file", tempFile, err);
+                            resolve(downloaded);
+                        });
+                    })
                 }
             });
 
