@@ -3,12 +3,10 @@ import SpotifyWebApi from 'spotify-web-api-js';
 import Utils from "./Utils";
 import SpotifyModule from "./SpotifyModule";
 import VmModule from "../../node/VmModule";
-import path from "path";
-import fs from "fs";
-import electron from "electron";
 
 class SpotifyApi {
     constructor() {
+        Utils.syncLocalStorage();
         this.spotifyModule = new SpotifyModule();
         this.vmModule = new VmModule();
         console.log(this.vmModule);
@@ -27,8 +25,8 @@ class SpotifyApi {
             this.api.setAccessToken(this.auth.token);
     }
 
-    async getUrl(query) {
-        return this.vmModule.stream(query);
+    async getUrl(spotifyTrack) {
+        return this.vmModule.stream(spotifyTrack);
     }
 
     saveAuth() {
@@ -40,8 +38,9 @@ class SpotifyApi {
     loadAuth() {
         if (localStorage.getItem('auth') !== null)
             this.auth = SpotifyAuthorization.import(localStorage.auth);
-        else
+        else {
             this.auth = new SpotifyAuthorization();
+        }
     }
 
     authorized() {

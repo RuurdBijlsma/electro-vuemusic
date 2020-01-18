@@ -1,6 +1,7 @@
 import youtube from './Youtube.mjs';
 import fs from 'fs';
 import path from 'path';
+import Utils from "../renderer/js/Utils";
 
 class Cacher {
     constructor() {
@@ -31,12 +32,12 @@ class Cacher {
         });
     }
 
-    async cacheIfNotExists(query) {
+    async cacheIfNotExists(query, spotifyTrack) {
         let fileExists = await this.fileExists(this.toPath(query));
         console.log(query + " exists? ", fileExists);
 
         if (!fileExists)
-            await this.cache(query);
+            await this.cache(query, spotifyTrack);
     }
 
     toPath(query) {
@@ -50,8 +51,9 @@ class Cacher {
         });
     }
 
-    async cache(query, stream) {
+    async cache(stream, spotifyTrack) {
         return new Promise(async (resolve) => {
+            let query = Utils.trackToQuery(spotifyTrack);
             if (this.cachingSongs.includes(query)) {
                 resolve(false);
                 return;
@@ -61,7 +63,7 @@ class Cacher {
 
             let filePath = this.toPath(query);
 
-            youtube.download(stream, filePath).then(() => {
+            youtube.download(stream, filePath, spotifyTrack).then(() => {
                 this.cachingSongs.splice(this.cachingSongs.indexOf(query), 1);
                 resolve(true);
                 this.fire('query' + query);

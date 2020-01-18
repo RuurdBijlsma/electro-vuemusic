@@ -84,40 +84,17 @@ import electron from "electron";import path from "path";import fs from "fs";
     //TODO:
     //Improve now playing for big screens
     //Improve loading of liked songs
-    //Prompt youtube api key and spotify secret and create file to remember them.
     //Fix seek/volume bars for white theme
-    //Now playing is BAD with electron version
 
 
     import SpotifyApi from "./js/SpotifyApi";
     import MusicPlayer from "./components/MusicPlayer";
     import electron from 'electron';
     import Credentials from "./js/Credentials";
-    import path from 'path';
-    import fs from 'fs';
+    import Utils from "./js/Utils";
 
     const remote = electron.remote;
 
-    //Handle localStorage to file sync
-    let app = electron.app;
-    if (electron.hasOwnProperty('remote'))
-        app = electron.remote.app;
-    let dir = path.join(app.getPath('music'), 'vuemusic');
-    setInterval(() => {
-        let data = JSON.stringify(localStorage);
-        fs.writeFileSync(localStorageFile, data);
-    }, 3000);
-    let localStorageFile = path.join(dir, 'localStorage.json');
-    if (fs.existsSync(localStorageFile)) {
-        let ls = JSON.parse(fs.readFileSync(localStorageFile));
-        for (let key in ls)
-            if (ls.hasOwnProperty(key) && localStorage.getItem(key) === null) {
-                console.log("Importing localStorage ", key, "from file");
-                localStorage[key] = ls[key];
-            } else {
-                console.log("NOT importing localStorage", key, "from file");
-            }
-    }
 
     console.log(Credentials, SpotifyApi);
     let win = remote.getCurrentWindow();
@@ -158,6 +135,7 @@ import electron from "electron";import path from "path";import fs from "fs";
                         console.log("Doing short refresh token :)");
                         await SpotifyApi.fullRefresh();
                     } else {
+                        console.log("Push login" + '\n' + JSON.parse(localStorage.auth).refresh + '\n' + SpotifyApi.auth.refresh);
                         await this.$router.push('/login');
                         return;
                     }
@@ -190,6 +168,10 @@ import electron from "electron";import path from "path";import fs from "fs";
                     document.querySelector('.my-app').style.paddingBottom = 'calc(56px + 106px)';
                 }
             }
+        },
+        beforeDestroy() {
+            if (Utils.hasOwnProperty('syncInterval'))
+                clearInterval(Utils.syncInterval);
         },
         watch: {
             '$store.state.track'() {

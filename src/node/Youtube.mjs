@@ -1,41 +1,108 @@
+process.env.FLUENTFFMPEG_COV = 0;
+
 import ytdl from "ytdl-core";
 import fs from "fs";
 import youtubeSearch from "youtube-search";
 import Credentials from "../renderer/js/Credentials";
-// import taglib from 'taglib2';
+import ffBinaries from 'ffbinaries';
+import child_process from 'child_process';
+import path from 'path';
+import EventEmitter from 'events';
 
-class Youtube {
+const exec = child_process.exec;
+
+console.log("Downloaded");
+
+
+class Youtube extends EventEmitter {
     constructor() {
+        super();
         this.baseUrl = 'http://www.youtube.com/watch?v=';
         this.ytdlOptions = {
             quality: 'highestaudio',
             filter: 'audioonly',
         };
         this.searchCache = {};
+        this.ffmpegPath = false;
+        this.downloadingFfmpeg = false;
+    }
+
+    tagsToString(tags) {
+        let result = [];
+        for (let tag in tags)
+            if (tags.hasOwnProperty(tag))
+                if (tags[tag] instanceof Array)
+                    for (let part of tags[tag])
+                        result.push(`-metadata ${tag}="${part}"`);
+                else
+                    result.push(`-metadata ${tag}="${tags[tag]}"`);
+        return result.join(' ');
+    }
+
+    async getFfmpegPath() {
+        return new Promise(resolve => {
+            if (this.ffmpegPath)
+                return resolve(this.ffmpegPath);
+            if (this.downloadingFfmpeg)
+                return this.once('downloadedFfmpeg', () => resolve(this.ffmpegPath));
+
+            ffBinaries.downloadBinaries(['ffmpeg'], {}, () => {
+                this.ffmpegPath = path.resolve('./ffmpeg');
+                resolve(this.ffmpegPath);
+                this.downloadingFfmpeg = false;
+                this.emit('downloadedFfmpeg');
+            });
+        });
+    }
+
+    async ffmpegMetadata(fileInput, fileOutput, tags) {
+        return new Promise(async (resolve, reject) => {
+            let ffmpegPath = await this.getFfmpegPath();
+            exec(`${ffmpegPath} -i "${fileInput}" ${this.tagsToString(tags)} "${fileOutput}"`, (error, stdout, stderr) => {
+                if (error) {
+                    console.error(`exec error: ${error}`);
+                    return reject(error);
+                }
+                // console.log(`stdout: ${stdout}`);
+                // console.log(`stderr: ${stderr}`);
+                resolve({err: stderr, out: stdout});
+            });
+        })
     }
 
     urlById(id) {
         return this.baseUrl + id;
     }
 
-    async download(stream, destinationFile) {
+    async download(stream, destinationFile, spotifyTrack) {
         return new Promise(resolve => {
-            console.log("Created download stream");
+            let tempFile = destinationFile + '.temp';
+            console.log("Created download stream", spotifyTrack);
 
-            stream.on('progress', (chunkLength, downloaded, totalLength) => {
+            stream.on('progress', async (chunkLength, downloaded, totalLength) => {
                 if (downloaded === totalLength) {
                     console.log("Youtube", "Download FINISHED ", destinationFile);
-                    console.log("Renaming temp file to normal file");
-                    fs.rename(destinationFile + '.temp', destinationFile, err => {
-
-                        if (err) console.warn("Youtube", "Could not rename destination file", destinationFile);
+                    let tags = {
+                        title: spotifyTrack.name,
+                        artist: spotifyTrack.artists.map(a => a.name),
+                        disc: spotifyTrack.disc_number,
+                        track: spotifyTrack.track_number,
+                    };
+                    if (spotifyTrack.hasOwnProperty('album'))
+                        tags.album = spotifyTrack.album.name;
+                    console.log("FFMPEGing file metadata", tags);
+                    await this.ffmpegMetadata(tempFile, destinationFile, tags);
+                    console.log("Deleting temp file", tempFile);
+                    fs.unlink(tempFile, (err) => {
+                        if (err)
+                            console.warn("Could not delete temp file", tempFile, err);
                         resolve(downloaded);
                     });
                 }
             });
 
             console.log("Creating temp file");
-            stream.pipe(fs.createWriteStream(destinationFile + '.temp', {flags: 'w'}));
+            stream.pipe(fs.createWriteStream(tempFile, {flags: 'w'}));
         })
     }
 

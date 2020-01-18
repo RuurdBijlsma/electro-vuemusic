@@ -3,6 +3,7 @@ node_modules
 /dist
 secrets.json
 credentials.json
+ffmpeg.exe
 /songs/
 # local env files
 .env.local

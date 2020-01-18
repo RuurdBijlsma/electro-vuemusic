@@ -363,7 +363,7 @@
                     mainAudio.onended = () => {
                     };
 
-                    let url = await SpotifyApi.getUrl(Utils.trackToQuery(track));
+                    let url = await SpotifyApi.getUrl(track);
                     this.local = url.includes('file://');
                     console.log(url);
 

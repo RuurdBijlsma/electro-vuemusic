@@ -3,7 +3,8 @@ import youtube from './Youtube.mjs'
 import path from 'path';
 import electron from 'electron';
 import ytdl from "ytdl-core";
-import fs from 'fs';
+import Utils from "../renderer/js/Utils";
+
 
 export default class VmModule {
     constructor() {
@@ -18,8 +19,9 @@ export default class VmModule {
         cacher.createDir();
     }
 
-    async stream(query) {
+    async stream(spotifyTrack) {
         return new Promise(async resolve => {
+            let query = Utils.trackToQuery(spotifyTrack);
             console.log("Directory:", path.resolve(cacher.toPath(query)));
             let file = cacher.toPath(query);
             console.log(1);
@@ -47,7 +49,7 @@ export default class VmModule {
                 resolve(formats[0].url);
             });
 
-            cacher.cache(query, stream).then(hasDownloaded => {
+            cacher.cache(stream, spotifyTrack).then(hasDownloaded => {
                 console.log("VueMusic", "cacheIfNotExists finished, downloaded?", hasDownloaded);
             });
         })
