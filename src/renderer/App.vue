@@ -1,4 +1,3 @@
-import electron from "electron";import path from "path";import fs from "fs";
 <template>
     <div id="app">
         <md-app class="my-app" md-mode="fixed">
@@ -41,6 +40,10 @@ import electron from "electron";import path from "path";import fs from "fs";
                         <md-icon>explore</md-icon>
                         <span class="md-list-item-text">Browse</span>
                     </md-list-item>
+                    <md-list-item to="/search">
+                        <md-icon>search</md-icon>
+                        <span class="md-list-item-text">Search</span>
+                    </md-list-item>
                 </md-list>
                 <md-list class="md-dense">
                     <md-subheader class="smol-subheader">Your Library</md-subheader>
@@ -70,8 +73,8 @@ import electron from "electron";import path from "path";import fs from "fs";
                 <router-view/>
             </md-app-content>
         </md-app>
-        <music-player class="music-player"/>
-        <md-bottom-bar class="bottom-bar" md-sync-route>
+        <music-player class="music-player" :wide="windowWidth >= 600"/>
+        <md-bottom-bar class="bottom-bar" md-sync-route v-if="windowWidth < 600">
             <md-bottom-bar-item to="/" exact md-label="Home" md-icon="home"/>
             <md-bottom-bar-item to="/browse" exact md-label="Browse" md-icon="explore"/>
             <md-bottom-bar-item to="/search" md-label="Search" md-icon="search"/>
@@ -85,7 +88,6 @@ import electron from "electron";import path from "path";import fs from "fs";
     //Improve now playing for big screens
     //Improve loading of liked songs
     //Fix seek/volume bars for white theme
-
 
     import SpotifyApi from "./js/SpotifyApi";
     import MusicPlayer from "./components/MusicPlayer";
@@ -107,9 +109,28 @@ import electron from "electron";import path from "path";import fs from "fs";
                 fullscreen: false,
                 playlists: [],
                 routeHistory: [],
+                windowWidth: window.innerWidth,
+                windowInterval: -1,
             }
         },
         async mounted() {
+            let prevSize = window.innerWidth;
+            let overWrite = window.innerWidth;
+            this.windowInterval = setInterval(() => {
+                this.windowWidth = window.innerWidth;
+                if (prevSize >= 600 && this.windowWidth < 600 || overWrite && overWrite < 600) {
+                    console.log("RESIZE TO SMOL");
+                    // Resize to smol version
+                    document.querySelector('.my-app').style.paddingBottom = '162px';
+                } else if (prevSize < 600 && this.windowWidth >= 600 || overWrite && overWrite >= 600) {
+                    console.log("RESIZE TO BIG");
+                    // Resize to big version
+                    document.querySelector('.my-app').style.paddingBottom = '106px';
+                }
+                overWrite = false;
+                prevSize = this.windowWidth;
+            }, 1000 / 10);
+
             window.addEventListener('resize', () => {
                 this.fullscreen = win.isMaximized();
             });
@@ -170,6 +191,7 @@ import electron from "electron";import path from "path";import fs from "fs";
             }
         },
         beforeDestroy() {
+            clearInterval(this.windowInterval);
             if (Utils.hasOwnProperty('syncInterval'))
                 clearInterval(Utils.syncInterval);
         },
@@ -185,7 +207,7 @@ import electron from "electron";import path from "path";import fs from "fs";
                 }
                 this.routeHistory.push(this.$route.path);
                 console.log("HISTORY", this.routeHistory);
-            }
+            },
         }
     }
 </script>
@@ -200,7 +222,7 @@ import electron from "electron";import path from "path";import fs from "fs";
     }
 
     .my-app {
-        padding-bottom: calc(56px + 106px);
+        /*padding-bottom: calc(56px + 106px);*/
         max-height: 100vh;
     }
 

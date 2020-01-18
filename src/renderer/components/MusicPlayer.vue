@@ -81,7 +81,7 @@
                     </md-content>
                 </div>
             </md-content>
-            <md-content :class="`player-bar${fullPage ? ' hide-bar' : ''}`">
+            <md-content :class="`player-bar${fullPage ? ' hide-bar' : ''}${wide ? ' wide-window' : ''}`">
                 <div class="top-player">
                     <div v-if="track.album.images.length > 0" class="track-image" @click="openFullPage"
                          :style="`background-image: url(${track.album.images[track.album.images.length - 1].url})`"></div>
@@ -216,6 +216,12 @@
                 repeat: true,
                 volume: 1,
                 local: false,
+            }
+        },
+        props:{
+            wide: {
+                type: Boolean,
+                default: false,
             }
         },
         mounted() {
@@ -613,6 +619,10 @@
         background-image: linear-gradient(45deg, #7d7d7d33, #7d7d7d33);
         padding: 8px;
         z-index: 2;
+    }
+
+    .player-bar.wide-window{
+        transform: translateY(0px);
     }
 
     .top-player {
