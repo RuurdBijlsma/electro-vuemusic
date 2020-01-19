@@ -1,20 +1,17 @@
-import electron from "electron";
 import path from "path";
 import fs from "fs";
+import Directories from "../../node/Directories";
 
 
 export default class Utils {
     static syncLocalStorage() {
         //Handle localStorage to file sync
-        let app = electron.app;
-        if (electron.hasOwnProperty('remote'))
-            app = electron.remote.app;
-        let dir = path.join(app.getPath('music'), 'vuemusic');
+        let dir = Directories.files;
+        let localStorageFile = path.join(dir, 'localStorage.json');
         Utils.syncInterval = setInterval(() => {
             let data = JSON.stringify(localStorage);
             fs.writeFileSync(localStorageFile, data);
         }, 3000);
-        let localStorageFile = path.join(dir, 'localStorage.json');
         if (fs.existsSync(localStorageFile)) {
             let ls = JSON.parse(fs.readFileSync(localStorageFile));
             for (let key in ls)

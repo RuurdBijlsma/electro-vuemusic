@@ -1,20 +1,15 @@
 import cacher from './Cacher.mjs';
 import youtube from './Youtube.mjs'
 import path from 'path';
-import electron from 'electron';
 import ytdl from "ytdl-core";
 import Utils from "../renderer/js/Utils";
+import Directories from "./Directories";
 
 
 export default class VmModule {
     constructor() {
-        let app = electron.app;
-        if (electron.hasOwnProperty('remote')) {
-            app = electron.remote.app;
-        }
-        let dir = path.join(app.getPath('music'), 'vuemusic');
         // const app = electron.remote.app;
-        cacher.songDirectory = dir;
+        cacher.songDirectory = Directories.music;
         console.log("CACHER SONGDIRECTORY", cacher.songDirectory);
         cacher.createDir();
     }

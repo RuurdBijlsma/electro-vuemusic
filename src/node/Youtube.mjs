@@ -1,3 +1,5 @@
+import Utils from "../renderer/js/Utils";
+
 process.env.FLUENTFFMPEG_COV = 0;
 
 import ytdl from "ytdl-core";
@@ -8,6 +10,8 @@ import ffBinaries from 'ffbinaries';
 import child_process from 'child_process';
 import path from 'path';
 import EventEmitter from 'events';
+import downloadFile from 'download-file';
+import Directories from "./Directories";
 
 const exec = child_process.exec;
 
@@ -46,7 +50,7 @@ class Youtube extends EventEmitter {
             if (this.downloadingFfmpeg)
                 return this.once('downloadedFfmpeg', () => resolve(this.ffmpegPath));
 
-            ffBinaries.downloadBinaries(['ffmpeg'], {}, () => {
+            ffBinaries.downloadBinaries(['ffmpeg'], {destination: Directories.files}, () => {
                 this.ffmpegPath = path.resolve('./ffmpeg');
                 resolve(this.ffmpegPath);
                 this.downloadingFfmpeg = false;
@@ -55,10 +59,20 @@ class Youtube extends EventEmitter {
         });
     }
 
-    async ffmpegMetadata(fileInput, fileOutput, tags) {
+    async ffmpegMetadata(fileInput, fileOutput, coverImageFile, tags) {
         return new Promise(async (resolve, reject) => {
             let ffmpegPath = await this.getFfmpegPath();
-            exec(`${ffmpegPath} -i "${fileInput}" ${this.tagsToString(tags)} "${fileOutput}"`, (error, stdout, stderr) => {
+            let command;
+            if (coverImageFile) {
+                command = `${ffmpegPath} -y -i "${fileInput}" -i "${coverImageFile}"` +
+                    ` -map 0:0 -map 1:0 -id3v2_version 3 -metadata:s:v title="Album cover" -metadata:s:v comment="Cover (Front)" ` +
+                    `${this.tagsToString(tags)} "${fileOutput}"`;
+            } else {
+                command = `${ffmpegPath} -y -i "${fileInput}"` +
+                    `${this.tagsToString(tags)} "${fileOutput}"`;
+            }
+            console.log("Executing ffmpeg command", command);
+            exec(command, (error, stdout, stderr) => {
                 if (error) {
                     console.error(`exec error: ${error}`);
                     return reject(error);
@@ -74,9 +88,25 @@ class Youtube extends EventEmitter {
         return this.baseUrl + id;
     }
 
+    async downloadFile(url, destinationFile) {
+        return new Promise((resolve, reject) => {
+            const options = {
+                directory: Directories.temp,
+                filename: destinationFile
+            };
+
+            downloadFile(url, options, err => {
+                if (err) reject(err);
+                resolve();
+            });
+        })
+    }
+
     async download(stream, destinationFile, spotifyTrack) {
         return new Promise(resolve => {
-            let tempFile = destinationFile + '.temp';
+            let tempFile1 = path.join(Directories.temp, destinationFile + '.tmp');
+            let tempFile2 = path.join(Directories.temp, destinationFile + '.ffmpeg.mp3');
+            let destinationPath = path.join(Directories.music, destinationFile);
             console.log("Created download stream", spotifyTrack);
 
             stream.on('progress', async (chunkLength, downloaded, totalLength) => {
@@ -91,21 +121,34 @@ class Youtube extends EventEmitter {
                     if (spotifyTrack.hasOwnProperty('album'))
                         tags.album = spotifyTrack.album.name;
                     console.log("FFMPEGing file metadata", tags);
-                    await this.ffmpegMetadata(tempFile, tempFile + '.ffmpeg.mp3', tags);
+
+                    let hasImage = spotifyTrack.hasOwnProperty('album') && spotifyTrack.album.images.length > 0;
+                    let imageFile = '';
+                    if (hasImage) {
+                        imageFile = Utils.trackToQuery(spotifyTrack) + '.tmp.jpg';
+                        await this.downloadFile(spotifyTrack.album.images[0].url, imageFile);
+                    }
+                    let imageDir = imageFile ? path.join(Directories.temp, imageFile) : '';
+                    await this.ffmpegMetadata(tempFile1, tempFile2, imageDir, tags);
                     console.log("Renaming temp ffmpeg file to destination file");
-                    fs.rename(tempFile + '.ffmpeg.mp3', destinationFile, err => {
-                        console.log("Deleting temp file", tempFile);
-                        fs.unlink(tempFile, (err) => {
+                    fs.rename(tempFile2, destinationPath, err => {
+                        console.log("Deleting temp file", tempFile2, 'err?', err);
+                        resolve(downloaded);
+                        if (imageFile)
+                            fs.unlink(imageDir, err => {
+                                if (err)
+                                    console.warn('Could not delete temp file', imageDir, err);
+                            });
+                        fs.unlink(tempFile1, err => {
                             if (err)
-                                console.warn("Could not delete temp file", tempFile, err);
-                            resolve(downloaded);
+                                console.warn("Could not delete temp file", tempFile1, err);
                         });
                     })
                 }
             });
 
             console.log("Creating temp file");
-            stream.pipe(fs.createWriteStream(tempFile, {flags: 'w'}));
+            stream.pipe(fs.createWriteStream(tempFile1, {flags: 'w'}));
         })
     }
 

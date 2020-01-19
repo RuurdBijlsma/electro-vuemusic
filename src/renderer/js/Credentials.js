@@ -1,16 +1,14 @@
 import fs from 'fs';
 import path from 'path';
 import EventEmitter from 'events';
-import electron from "electron";
+import Directories from "../../node/Directories";
 
 class Credentials extends EventEmitter {
     constructor() {
         super();
-        let app = electron.app;
-        if (electron.hasOwnProperty('remote'))
-            app = electron.remote.app;
-        let dir = path.join(app.getPath('music'), 'vuemusic');
-        this.credentialsFile = path.join(dir, './credentials.json');
+        let dir = Directories.files;
+        console.log(Directories);
+        this.credentialsFile = path.join(dir, 'credentials.json');
         console.log('Credentials file location', path.resolve(this.credentialsFile));
         this.spotifyId = '';
         this.spotifySecret = '';

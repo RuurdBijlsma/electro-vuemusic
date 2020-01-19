@@ -2,6 +2,7 @@ import youtube from './Youtube.mjs';
 import fs from 'fs';
 import path from 'path';
 import Utils from "../renderer/js/Utils";
+import Directories from "./Directories";
 
 class Cacher {
     constructor() {
@@ -41,8 +42,12 @@ class Cacher {
     }
 
     toPath(query) {
+        return path.join(Directories.music, this.toFile(query));
+    }
+
+    toFile(query) {
         query = query.replace(/([^a-z0-9 ]+)/gi, '-');
-        return path.join(this.songDirectory, query) + '.mp3';
+        return query + '.mp3';
     }
 
     timeout(ms) {
@@ -61,9 +66,7 @@ class Cacher {
 
             this.cachingSongs.push(query);
 
-            let filePath = this.toPath(query);
-
-            youtube.download(stream, filePath, spotifyTrack).then(() => {
+            youtube.download(stream, this.toFile(query), spotifyTrack).then(() => {
                 this.cachingSongs.splice(this.cachingSongs.indexOf(query), 1);
                 resolve(true);
                 this.fire('query' + query);
