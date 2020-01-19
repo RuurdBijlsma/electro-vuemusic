@@ -52,7 +52,7 @@ class Youtube extends EventEmitter {
                 return this.once('downloadedFfmpeg', () => resolve(this.ffmpegPath));
 
             ffBinaries.downloadBinaries(['ffmpeg'], {destination: Directories.files}, () => {
-                this.ffmpegPath = path.resolve('./ffmpeg');
+                this.ffmpegPath = path.join(Directories.files, './ffmpeg');
                 resolve(this.ffmpegPath);
                 this.downloadingFfmpeg = false;
                 this.emit('downloadedFfmpeg');

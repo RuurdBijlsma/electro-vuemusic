@@ -357,6 +357,10 @@
                     };
                     mainAudio.onended = () => {
                     };
+                    secondAudio.oncanplay = () => {
+                    };
+                    secondAudio.onended = () => {
+                    };
 
                     let url = await SpotifyApi.getUrl(track);
                     this.local = url.includes('file://');
