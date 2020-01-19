@@ -10,7 +10,8 @@ import ffBinaries from 'ffbinaries';
 import child_process from 'child_process';
 import path from 'path';
 import EventEmitter from 'events';
-import downloadFile from 'download-file';
+import http from 'http';
+import https from 'https';
 import Directories from "./Directories";
 
 const exec = child_process.exec;
@@ -90,16 +91,16 @@ class Youtube extends EventEmitter {
 
     async downloadFile(url, destinationFile) {
         return new Promise((resolve, reject) => {
-            const options = {
-                directory: Directories.temp,
-                filename: destinationFile
-            };
+            let file = fs.createWriteStream(destinationFile);
+            let requester = http;
+            if (url.startsWith('https'))
+                requester = https;
 
-            downloadFile(url, options, err => {
-                if (err) reject(err);
-                resolve();
-            });
-        })
+            requester.get(url, response => {
+                response.pipe(file);
+                response.on('end', () => resolve());
+            }).on('error', e => reject(e));
+        });
     }
 
     async download(stream, destinationFile, spotifyTrack) {
@@ -123,18 +124,17 @@ class Youtube extends EventEmitter {
                     console.log("FFMPEGing file metadata", tags);
 
                     let hasImage = spotifyTrack.hasOwnProperty('album') && spotifyTrack.album.images.length > 0;
-                    let imageFile = '';
+                    let imageDir = '';
                     if (hasImage) {
-                        imageFile = Utils.trackToQuery(spotifyTrack) + '.tmp.jpg';
-                        await this.downloadFile(spotifyTrack.album.images[0].url, imageFile);
+                        imageDir = path.join(Directories.temp, Utils.trackToQuery(spotifyTrack) + '.tmp.jpg');
+                        await this.downloadFile(spotifyTrack.album.images[0].url, imageDir);
                     }
-                    let imageDir = imageFile ? path.join(Directories.temp, imageFile) : '';
                     await this.ffmpegMetadata(tempFile1, tempFile2, imageDir, tags);
                     console.log("Renaming temp ffmpeg file to destination file");
                     fs.rename(tempFile2, destinationPath, err => {
                         console.log("Deleting temp file", tempFile2, 'err?', err);
                         resolve(downloaded);
-                        if (imageFile)
+                        if (imageDir)
                             fs.unlink(imageDir, err => {
                                 if (err)
                                     console.warn('Could not delete temp file', imageDir, err);
@@ -228,4 +228,5 @@ class Youtube extends EventEmitter {
     }
 }
 
-export default new Youtube();
+let yt = new Youtube();
+export default yt;
