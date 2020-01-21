@@ -64,7 +64,7 @@
                     console.log("removed", this.playlist.id, {response});
                     this.favorite = false;
                 } else {
-                    let response = await SpotifyApi.api.followArtists(this.playlist.id);
+                    let response = await SpotifyApi.api.followPlaylist(this.playlist.id);
                     console.log("added", this.playlist.id, {response});
                     this.favorite = true;
                 }
