@@ -34,19 +34,19 @@
                         </md-button>
 
                         <div class="complete-seek">
-                            <div class="track-time" v-if="$refs.hasOwnProperty('audio')">
+                            <div class="track-time non-clickable" v-if="$refs.hasOwnProperty('audio')">
                                 {{toHms(mainAudio.currentTime)}}
                             </div>
                             <div class="seek-container seek-page" ref="seekContainerPage" @mousedown="down"
                                  @touchstart="down($event.touches[0])">
                                 <md-content class="seek">
                                     <md-content class="seek-progress md-accent"
-                                                :style="`width: ${Math.round(seekProgress * 100)}%`"/>
+                                                :style="`width: ${Math.round(seekProgress * 10000)/100}%`"/>
                                     <md-content class="seek-thumb md-accent"
-                                                :style="`left: ${Math.round(seekProgress * 100)}%`"/>
+                                                :style="`left: ${Math.round(seekProgress * 10000)/100}%`"/>
                                 </md-content>
                             </div>
-                            <div class="track-time">
+                            <div class="track-time non-clickable">
                                 {{($refs.hasOwnProperty('audio') && mainAudio.duration) ? toHms(mainAudio.duration)
                                 : ''}}
                             </div>
@@ -142,9 +142,9 @@
                                  @touchstart="down($event.touches[0])">
                                 <md-content class="seek">
                                     <md-content class="seek-progress md-primary"
-                                                :style="`width: ${Math.round(seekProgress * 100)}%`"/>
+                                                :style="`width: ${Math.round(seekProgress * 10000)/100}%`"/>
                                     <md-content class="seek-thumb md-primary"
-                                                :style="`left: ${Math.round(seekProgress * 100)}%`"/>
+                                                :style="`left: ${Math.round(seekProgress * 10000)/100}%`"/>
                                 </md-content>
                             </div>
                             <div class="track-time" v-if="windowWidth > 600">
@@ -601,6 +601,14 @@
 </script>
 
 <style scoped>
+    .clickable {
+        cursor: pointer;
+    }
+
+    .non-clickable{
+        cursor:default;
+    }
+
     .music-player {
         pointer-events: none;
     }
@@ -642,6 +650,10 @@
         white-space: nowrap;
         flex-grow: 1;
         margin-left: 15px;
+    }
+
+    .info-text>span:nth-child(1){
+        cursor: pointer;
     }
 
     .info-text::-webkit-scrollbar {
@@ -777,6 +789,7 @@
         left: 0;
         transition: 0.2s;
         transform: translateY(100vh);
+        box-shadow: inset 0 50px 0 0 black;
         z-index: 3;
         overflow-x: hidden;
     }
@@ -822,7 +835,8 @@
     }
 
     .up {
-        min-height: 45%;
+        min-height: calc(35% - 50px);
+        margin-top: 50px;
     }
 
     .down {
@@ -830,16 +844,14 @@
     }
 
     .down .md-headline {
-        min-height: 80px;
         max-height: 80px;
+        margin: 1vw auto;
         overflow: hidden;
         text-overflow: ellipsis;
         max-width: 70%;
-        position: relative;
-        left: 15%;
         text-align: center;
         display: block;
-        margin-bottom: 0px;
+        cursor:default;
     }
 
     .top-bar {
@@ -857,7 +869,7 @@
         max-width: 300px;
         max-height: 300px;
         height: 80vw;
-        margin: 10vw;
+        margin: 5vw;
         position: relative;
         box-shadow: 0 0 15px 0 rgba(0, 0, 0, 0.4);
         border-radius: 4px;

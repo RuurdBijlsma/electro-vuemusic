@@ -13,6 +13,9 @@
                 </div>
                 <div class="drag-region"></div>
                 <div class="right-content">
+                    <md-button class="md-icon-button" to="/downloads">
+                        <md-icon>cloud_download</md-icon>
+                    </md-button>
                     <md-button class="md-icon-button" to="/settings">
                         <md-icon>settings</md-icon>
                     </md-button>
@@ -222,6 +225,10 @@
 <style>
     @import url('https://fonts.googleapis.com/css?family=Material+Icons|Montserrat|Roboto:400,400i,500,600,700,800,900&display=swap');
 
+    p, span {
+        cursor: inherit;
+    }
+
     #app {
         font-family: 'Montserrat', 'Roboto', Helvetica, Arial, sans-serif;
         -webkit-font-smoothing: antialiased;
@@ -259,9 +266,6 @@
     .playlist-list-item {
         opacity: 0.9;
         font-size: 10px !important;
-        padding: 1px !important;
-        margin: 5px !important;
-        height: 24px !important;
     }
 
     .bottom-bar {

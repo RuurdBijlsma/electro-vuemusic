@@ -1,7 +1,4 @@
 import Utils from "../renderer/js/Utils";
-
-process.env.FLUENTFFMPEG_COV = 0;
-
 import ytdl from "ytdl-core";
 import fs from "fs";
 import youtubeSearch from "youtube-search";
@@ -13,6 +10,9 @@ import EventEmitter from 'events';
 import http from 'http';
 import https from 'https';
 import Directories from "./Directories";
+import store from '../renderer/store';
+
+process.env.FLUENTFFMPEG_COV = 0;
 
 const exec = child_process.exec;
 
@@ -60,7 +60,7 @@ class Youtube extends EventEmitter {
         });
     }
 
-    async ffmpegMetadata(fileInput, fileOutput, coverImageFile, tags) {
+    async ffmpegMetadata(fileInput, fileOutput, coverImageFile, tags, processHolder) {
         return new Promise(async (resolve, reject) => {
             let ffmpegPath = await this.getFfmpegPath();
             let command;
@@ -73,7 +73,7 @@ class Youtube extends EventEmitter {
                     `${this.tagsToString(tags)} "${fileOutput}"`;
             }
             console.log("Executing ffmpeg command", command);
-            exec(command, (error, stdout, stderr) => {
+            processHolder.process = exec(command, (error, stdout, stderr) => {
                 if (error) {
                     console.error(`exec error: ${error}`);
                     return reject(error);
@@ -108,10 +108,24 @@ class Youtube extends EventEmitter {
             let tempFile1 = path.join(Directories.temp, destinationFile + '.tmp');
             let tempFile2 = path.join(Directories.temp, destinationFile + '.ffmpeg.mp3');
             let destinationPath = path.join(Directories.music, destinationFile);
-            console.log("Created download stream", spotifyTrack);
+            console.log("Created download stream", spotifyTrack, store);
+            let done = false;
+            let processHolder = {process: false};
+            let cancel = () => {
+                console.warn("CANCELLING DOWNLOAD", spotifyTrack, done, processHolder);
+                if (!done)
+                    stream.destroy();
+                else if (processHolder.process)
+                    processHolder.process.kill();
+
+                resolve(false);
+                store.commit('setDownload', [spotifyTrack, -2, -2, cancel]);
+            };
 
             stream.on('progress', async (chunkLength, downloaded, totalLength) => {
+                store.commit('setDownload', [spotifyTrack, downloaded, totalLength, cancel]);
                 if (downloaded === totalLength) {
+                    done = true;
                     console.log("Youtube", "Download FINISHED ", destinationFile);
                     let tags = {
                         title: spotifyTrack.name,
@@ -129,11 +143,13 @@ class Youtube extends EventEmitter {
                         imageDir = path.join(Directories.temp, Utils.trackToQuery(spotifyTrack) + '.tmp.jpg');
                         await this.downloadFile(spotifyTrack.album.images[0].url, imageDir);
                     }
-                    await this.ffmpegMetadata(tempFile1, tempFile2, imageDir, tags);
+                    await this.ffmpegMetadata(tempFile1, tempFile2, imageDir, tags, processHolder);
+                    processHolder.process = false;
                     console.log("Renaming temp ffmpeg file to destination file");
                     fs.rename(tempFile2, destinationPath, err => {
                         console.log("Deleting temp file", tempFile2, 'err?', err);
-                        resolve(downloaded);
+                        store.commit('setDownload', [spotifyTrack, -1, -1, cancel]);
+                        resolve(true);
                         if (imageDir)
                             fs.unlink(imageDir, err => {
                                 if (err)

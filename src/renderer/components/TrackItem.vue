@@ -9,14 +9,14 @@
                 width: ${lite?'100%':'calc(100% - 5px)'};
                 text-overflow: ${lite?'ellipsis':'inherit'};
              `">
-                <span class="text" @click="playSong">{{track.name}}</span>
+                <span class="text clickable" @click="playSong">{{track.name}}</span>
                 <span class="text dot">•</span>
                 <artists-span class="text" :artists="track.artists"/>
             </div>
         </div>
 
         <div class="right-content">
-            <span class="text" @click="playSong">{{toHms(track.duration_ms / 1000)}}</span>
+            <span class="text non-clickable" @click="playSong">{{toHms(track.duration_ms / 1000)}}</span>
 
             <md-button class="md-icon-button" @click="toggleFavorite" v-if="!lite && favorite !== undefined">
                 <md-icon v-if="isFavorite">favorite</md-icon>
@@ -142,6 +142,14 @@
 </script>
 
 <style scoped>
+    .clickable {
+        cursor: pointer;
+    }
+
+    .non-clickable {
+        cursor: default;
+    }
+
     .track-item {
         display: flex;
         justify-content: space-between;

@@ -66,9 +66,9 @@ class Cacher {
 
             this.cachingSongs.push(query);
 
-            youtube.download(stream, this.toFile(query), spotifyTrack).then(() => {
+            youtube.download(stream, this.toFile(query), spotifyTrack).then(downloaded => {
                 this.cachingSongs.splice(this.cachingSongs.indexOf(query), 1);
-                resolve(true);
+                resolve(downloaded);
                 this.fire('query' + query);
             }).catch(e => {
                 console.warn('yt download err', e);
