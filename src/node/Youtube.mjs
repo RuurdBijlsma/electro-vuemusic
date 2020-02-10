@@ -30,6 +30,10 @@ class Youtube extends EventEmitter {
         this.searchCache = {};
         this.ffmpegPath = false;
         this.downloadingFfmpeg = false;
+
+        setInterval(()=>{
+            this.searchCache = {};
+        }, 1000 * 60 * 60 * 24 * 29);
     }
 
     tagsToString(tags) {
