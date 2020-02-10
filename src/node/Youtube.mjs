@@ -31,7 +31,7 @@ class Youtube extends EventEmitter {
         this.ffmpegPath = false;
         this.downloadingFfmpeg = false;
 
-        setInterval(()=>{
+        setInterval(() => {
             this.searchCache = {};
         }, 1000 * 60 * 60 * 24 * 29);
     }
