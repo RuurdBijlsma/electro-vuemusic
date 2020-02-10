@@ -74,12 +74,34 @@
 
 
             this.dataTracks = await this.getAll();
+            console.log(this.dataTracks);
             this.favorites = await this.checkSavedTracks(this.dataTracks);
             this.renderedTracks = this.dataTracks.slice(0, maxRender);
+
+            // console.log('genres:', await this.getGenres(this.dataTracks));
 
             document.querySelector('.md-app-scroller').addEventListener('scroll', this.handleScroll);
         },
         methods: {
+            async getGenres(tracks) {
+                let allArtists = new Set(tracks.map(t => t.artists).flat().map(t => t.id));
+                let tempArray = [];
+                allArtists.forEach(k => tempArray.push(k));
+
+                let slice = 50;
+                let tasks = [];
+                for (let i = 0; i < tempArray.length; i += slice) {
+                    let artistsSlice = tempArray.slice(i, i + slice);
+                    let task = SpotifyApi.api.getArtists(artistsSlice);
+                    tasks.push(task)
+                }
+                let artists = await Promise.all(tasks);
+                artists = artists.map(t => t.artists).flat().map(t => t.genres).flat();
+                let artistsSet = new Set(artists);
+                let artistsArray = [];
+                artistsSet.forEach(t => artistsArray.push(t));
+                return artistsArray;
+            },
             shuffle() {
                 if (!this.$store.state.shuffle)
                     this.$store.commit('toggleShuffle');
