@@ -4,6 +4,13 @@ import Directories from "../../node/Directories";
 
 
 export default class Utils {
+    static cleanTempFolder() {
+        let files = fs.readdirSync(Directories.temp);
+        for (const file of files) {
+            fs.unlinkSync(path.join(Directories.temp, file));
+        }
+    }
+
     static syncLocalStorage() {
         //Handle localStorage to file sync
         let dir = Directories.files;

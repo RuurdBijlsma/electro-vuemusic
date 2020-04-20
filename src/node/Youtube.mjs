@@ -32,8 +32,9 @@ class Youtube extends EventEmitter {
         this.downloadingFfmpeg = false;
 
         setInterval(() => {
+            console.log("Clearning searchCache");
             this.searchCache = {};
-        }, 1000 * 60 * 60 * 24 * 29);
+        }, 1000 * 60 * 60 * 24 * 20);
     }
 
     tagsToString(tags) {
@@ -220,8 +221,11 @@ class Youtube extends EventEmitter {
 
     async search(query, maxResults = 5, category) {
         let key = query + maxResults + category;
-        if (!this.searchCache.hasOwnProperty(key))
-            this.searchCache[key] = await this.searchYt(query, maxResults, category);
+        if (!this.searchCache.hasOwnProperty(key)) {
+            let result = await this.searchYt(query, maxResults, category);
+            this.searchCache[key] = result;
+            return result;
+        }
 
         return this.searchCache[key];
     }
@@ -238,6 +242,7 @@ class Youtube extends EventEmitter {
             };
             if (category !== undefined)
                 opts.videoCategoryId = category;
+
 
             youtubeSearch(query, opts, (err, results) => {
                 if (err) error(err);

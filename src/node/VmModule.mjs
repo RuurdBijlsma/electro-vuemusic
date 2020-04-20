@@ -31,6 +31,7 @@ export default class VmModule {
             console.log(4);
             console.log('VueMusic', "Streaming YouTube", query);
             let results = await youtube.search(query, 1);
+            console.log("Youtube search results", results, youtube);
             let id = results[0].id;
             let stream = ytdl(youtube.urlById(id), youtube.ytdlOptions);
             console.log("Created stream", stream);

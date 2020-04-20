@@ -54,5 +54,5 @@ export default new Vuex.Store({
         setQueue(state, queue) {
             state.queue = queue;
         },
-    }
+    },
 });

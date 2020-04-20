@@ -191,6 +191,8 @@
     import {remote} from 'electron';
     import {baseUrl} from '../../node/BaseUrl.mjs';
 
+    const likeShortcut = 'Shift+Alt+L';
+
     export default {
         name: "MusicPlayer",
         components: {TrackList, ArtistsSpan},
@@ -226,6 +228,23 @@
             }
         },
         mounted() {
+            if (remote.globalShortcut.isRegistered(likeShortcut))
+                remote.globalShortcut.unregister(likeShortcut);
+            let regResult = remote.globalShortcut.register(likeShortcut, async () => {
+                await this.toggleFavorite();
+                let speech;
+                if (this.track.favorite) {
+                    speech = 'Added to favorites';
+                } else {
+                    speech = 'Removed from favorites';
+                }
+                let voices = speechSynthesis.getVoices();
+                let voice = voices[Math.floor(Math.random() * voices.length)];
+                let utterance = new SpeechSynthesisUtterance(speech);
+                utterance.voice = voice;
+                speechSynthesis.speak(utterance);
+            });
+            console.log("Register successful?", regResult);
             this.mainAudio = this.$refs.audio;
             this.secondAudio = this.$refs.audio2;
             if (this.queue.length === 0 && localStorage.getItem('queue') !== null)
@@ -520,6 +539,16 @@
                     console.log('Warning! The "seekto" media session action is not supported.');
                 }
             },
+            async setFavorite() {
+                this.toggling = true;
+                this.favoriteButtonKey++;
+                if (this.track) {
+                    let response = await SpotifyApi.api.addToMySavedTracks([this.track.id]);
+                    console.log("added", this.track.id, {response});
+                    this.track.favorite = true;
+                }
+                this.toggling = false;
+            },
             async toggleFavorite() {
                 if (this.toggling) return;
                 if (!this.track) return;
@@ -594,6 +623,7 @@
             },
         },
         beforeDestroy() {
+            remote.globalShortcut.unregister(likeShortcut);
             window.removeEventListener('resize', this.updateWindowSize);
             clearInterval(this.interval);
         }
@@ -605,8 +635,8 @@
         cursor: pointer;
     }
 
-    .non-clickable{
-        cursor:default;
+    .non-clickable {
+        cursor: default;
     }
 
     .music-player {
@@ -652,7 +682,7 @@
         margin-left: 15px;
     }
 
-    .info-text>span:nth-child(1){
+    .info-text > span:nth-child(1) {
         cursor: pointer;
     }
 
@@ -851,7 +881,7 @@
         max-width: 70%;
         text-align: center;
         display: block;
-        cursor:default;
+        cursor: default;
     }
 
     .top-bar {
