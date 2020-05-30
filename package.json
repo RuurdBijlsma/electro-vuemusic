@@ -1,6 +1,6 @@
 {
   "name": "electro-vuemusic",
-  "version": "0.2",
+  "version": "0.2.0",
   "description": "Music streaming program that uses the Spotify API",
   "keywords": [
     "Music",
