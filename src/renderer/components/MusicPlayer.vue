@@ -219,6 +219,7 @@
                 volume: 1,
                 local: false,
                 win: null,
+                loadTimeout: false,
             }
         },
         props: {
@@ -370,6 +371,20 @@
                         mainAudio.pause();
                     }
 
+                    // If loading audio takes more than 10 seconds, skip to next song
+                    if (this.loadTimeout) {
+                        clearTimeout(this.loadTimeout);
+                        // console.warn("Clearing timeout");
+                    }
+                    // console.warn("Setting check song timeout thing");
+                    this.loadTimeout = setTimeout(() => {
+                        // console.warn("Checking if song is loaded");
+                        if (this.loadingAudio === true) {
+                            console.warn("Song didn't load maybe? Skipping next");
+                            this.skip(1);
+                        }
+                    }, 10 * 1000);
+
                     this.loadingAudio = true;
                     this.setTrackMetaData(track);
                     mainAudio.oncanplay = () => {
@@ -411,6 +426,10 @@
                         if (resume)
                             this.mainAudio.play();
                         this.loadingAudio = false;
+                        // console.warn("Song loaded!");
+                        clearTimeout(this.loadTimeout);
+                        // console.warn("Clearing timeout");
+                        this.loadTimeout = false;
                         resolve();
                     };
                 });
