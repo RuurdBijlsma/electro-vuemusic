@@ -131,7 +131,7 @@
                     location.reload();
             });
 
-            this.init();
+            await this.init();
             //Being sure bottom padding is correct, it's overwritten somewhere after this function by vue-material
             this.updateBottomPadding();
             setTimeout(() => {
@@ -166,7 +166,7 @@
                         console.log("Doing short refresh token :)");
                         await SpotifyApi.fullRefresh();
                     } else {
-                        console.log("Push login" + '\n' + JSON.parse(localStorage.auth).refresh + '\n' + SpotifyApi.auth.refresh);
+                        // console.log("Push login" + '\n' + JSON.parse(localStorage.auth).refresh + '\n' + SpotifyApi.auth.refresh);
                         await this.$router.push('/login');
                         return;
                     }

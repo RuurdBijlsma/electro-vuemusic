@@ -20,9 +20,19 @@ export default class XMLHttpRequestInterceptor {
     }
 
     async sendLive() {
+        console.log("Checking spotify authorization before request", {
+            authorized: SpotifyApi.authorized(),
+            refreshToken: SpotifyApi.auth.refresh
+        });
         if (!SpotifyApi.authorized() && SpotifyApi.auth.refresh !== null) {
+            console.warn("Request was made, but spotify is not authorized, or has no refresh token", {
+                authorized: SpotifyApi.authorized(),
+                refreshToken: SpotifyApi.auth.refresh
+            });
             let refresh = await SpotifyApi.refreshToken();
+            console.warn("New refresh token", refresh);
             SpotifyApi.saveRefresh(refresh);
+            console.log("Saving refresh token before continuing with request:", this.url, this.options);
         }
         let response = await fetch(this.url, this.options);
         this.readyState = 4;

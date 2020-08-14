@@ -190,6 +190,8 @@
     import path from 'path';
     import {remote} from 'electron';
     import {baseUrl} from '../../node/BaseUrl.mjs';
+    import cacher from "../../node/Cacher";
+    import VmModule from "../../node/VmModule";
 
     const likeShortcut = 'Shift+Alt+L';
 
@@ -359,15 +361,15 @@
                     await this.play();
 
             },
-            async loadSong(track) {
+            async loadSong(track, n = 0, resumeOverride = false) {
                 return new Promise(async resolve => {
                     this.local = false;
                     let mainAudio = this.mainAudio;
                     let secondAudio = this.secondAudio;
 
-                    let resume = false;
-                    if (!mainAudio.paused) {
-                        resume = true;
+                    let resume = !mainAudio.paused || resumeOverride
+                    console.warn("Should we resume audio when it's loaded??", resume);
+                    if (resume) {
                         mainAudio.pause();
                     }
 
@@ -380,10 +382,10 @@
                     this.loadTimeout = setTimeout(() => {
                         // console.warn("Checking if song is loaded");
                         if (this.loadingAudio === true) {
-                            console.warn("Song didn't load maybe? Skipping next");
-                            this.skip(1);
+                            console.warn("Song didn't load maybe? Trying other format");
+                            this.loadSong(track, n + 1, resume);
                         }
-                    }, 10 * 1000);
+                    }, 6 * 1000);
 
                     this.loadingAudio = true;
                     this.setTrackMetaData(track);
@@ -396,13 +398,20 @@
                     secondAudio.onended = () => {
                     };
 
-                    let url = await SpotifyApi.getUrl(track);
+                    let {id, urls} = await SpotifyApi.getUrls(track);
+                    if (n >= urls.length) {
+                        console.warn("Skipping next because none of the song formats loaded");
+                        await this.skip(1);
+                        return;
+                    }
+                    let url = urls[n];
                     this.local = url.includes('file://');
                     console.log(url);
 
                     secondAudio.src = url;
                     secondAudio.onended = () => this.skip(1);
 
+                    let cacheStarted = false;
                     secondAudio.oncanplay = () => {
                         this.mainAudio = secondAudio;
                         this.secondAudio = mainAudio;
@@ -428,6 +437,13 @@
                         this.loadingAudio = false;
                         // console.warn("Song loaded!");
                         clearTimeout(this.loadTimeout);
+                        if (!this.local && !cacheStarted) {
+                            cacheStarted = true;
+                            console.log("Song seems to have loaded fine, caching non-local song now");
+                            cacher.cache(SpotifyApi.vmModule.getStream(id), track).then(hasDownloaded => {
+                                console.log("VueMusic", "cacheIfNotExists finished, downloaded?", hasDownloaded);
+                            });
+                        }
                         // console.warn("Clearing timeout");
                         this.loadTimeout = false;
                         resolve();

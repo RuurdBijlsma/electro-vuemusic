@@ -25,7 +25,7 @@ class SpotifyApi {
             this.api.setAccessToken(this.auth.token);
     }
 
-    async getUrl(spotifyTrack) {
+    async getUrls(spotifyTrack) {
         return this.vmModule.stream(spotifyTrack);
     }
 
@@ -44,12 +44,22 @@ class SpotifyApi {
     }
 
     authorized() {
-        if (this.auth.code === null)
+        if (this.auth.code === null){
+            console.log("Not authorized because no auth code");
             return false;
-        if (this.auth.token === null)
+        }
+        if (this.auth.token === null){
+            console.log("Not authorized because no auth token");
             return false;
-        if (this.auth.expires - 1000 * 600 <= (+new Date()))
+        }
+        const tokenLife = 3600 * 1000;
+        const refreshTimeout = tokenLife - 3000 * 1000;
+        // const refreshTimeout = tokenLife - 6 * 1000;
+        // console.log(this.auth.expires, (+new Date()))
+        if (this.auth.expires - refreshTimeout <= (+new Date())){
+            console.log("Not authorized because expired auth", this.auth.expires, refreshTimeout, +new Date());
             return false;
+        }
         return true;
     }
 

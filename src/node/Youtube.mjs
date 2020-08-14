@@ -103,20 +103,35 @@ class Youtube extends EventEmitter {
 
             requester.get(url, response => {
                 response.pipe(file);
-                response.on('end', () => resolve());
+                response.on('end', () => {
+                    response.unpipe(file);
+                    response.destroy();
+                    file.close();
+                    resolve();
+                });
             }).on('error', e => reject(e));
+        });
+    }
+
+    async wait(ms) {
+        return new Promise(resolve => {
+            setTimeout(() => resolve(), ms);
         });
     }
 
     async download(stream, destinationFile, spotifyTrack) {
         return new Promise(resolve => {
-            let tempFile1 = path.join(Directories.temp, destinationFile + '.tmp');
+            let tempFile1 = path.join(Directories.temp, destinationFile + '.tmp.mp3');
             let tempFile2 = path.join(Directories.temp, destinationFile + '.ffmpeg.mp3');
             let destinationPath = path.join(Directories.music, destinationFile);
             console.log("Created download stream", spotifyTrack, store);
             let done = false;
             let processHolder = {process: false};
+            //For debug retrying the meta data and rename process
+            let finalize = () => {
+            };
             let cancel = () => {
+                // finalize();
                 console.warn("CANCELLING DOWNLOAD", spotifyTrack, done, processHolder);
                 if (!done)
                     stream.destroy();
@@ -127,8 +142,13 @@ class Youtube extends EventEmitter {
                 store.commit('setDownload', [spotifyTrack, -2, -2, cancel]);
             };
 
+            let writer = fs.createWriteStream(tempFile1, {flags: 'w'});
+
             stream.on('progress', async (chunkLength, downloaded, totalLength) => {
+                downloaded = +downloaded;
+                totalLength = +totalLength;
                 store.commit('setDownload', [spotifyTrack, downloaded, totalLength, cancel]);
+                console.log("Download progress", spotifyTrack, downloaded / totalLength, downloaded, totalLength);
                 if (downloaded === totalLength) {
                     done = true;
                     console.log("Youtube", "Download FINISHED ", destinationFile);
@@ -148,28 +168,40 @@ class Youtube extends EventEmitter {
                         imageDir = path.join(Directories.temp, Utils.trackToQuery(spotifyTrack) + '.tmp.jpg');
                         await this.downloadFile(spotifyTrack.album.images[0].url, imageDir);
                     }
-                    await this.ffmpegMetadata(tempFile1, tempFile2, imageDir, tags, processHolder);
-                    processHolder.process = false;
-                    console.log("Renaming temp ffmpeg file to destination file");
-                    fs.rename(tempFile2, destinationPath, err => {
-                        console.log("Deleting temp file", tempFile2, 'err?', err);
-                        store.commit('setDownload', [spotifyTrack, -1, -1, cancel]);
-                        resolve(true);
-                        if (imageDir)
-                            fs.unlink(imageDir, err => {
+                    stream.unpipe(writer);
+                    writer.close();
+                    // stream.close();
+                    stream.destroy();
+                    finalize = async () => {
+                        await this.ffmpegMetadata(tempFile1, tempFile2, imageDir, tags, processHolder);
+                        if (processHolder.process)
+                            processHolder.process.kill();
+                        processHolder.process = false;
+                        console.log("Renaming temp ffmpeg file to destination file");
+                        fs.rename(tempFile2, destinationPath, err => {
+                            console.log("Deleting temp file", tempFile2, 'err?', err);
+                            store.commit('setDownload', [spotifyTrack, -1, -1, cancel]);
+                            resolve(true);
+                            if (imageDir)
+                                fs.unlink(imageDir, err => {
+                                    if (err)
+                                        console.warn('Could not delete temp file', imageDir, err);
+                                });
+                            fs.unlink(tempFile1, err => {
                                 if (err)
-                                    console.warn('Could not delete temp file', imageDir, err);
+                                    console.warn("Could not delete temp file", tempFile1, err);
                             });
-                        fs.unlink(tempFile1, err => {
-                            if (err)
-                                console.warn("Could not delete temp file", tempFile1, err);
                         });
-                    })
+                    }
+                    store.commit('setDownload', [spotifyTrack, downloaded, totalLength, cancel]);
+                    setTimeout(() => {
+                        finalize();
+                    }, 2000);
                 }
             });
 
             console.log("Creating temp file");
-            stream.pipe(fs.createWriteStream(tempFile1, {flags: 'w'}));
+            stream.pipe(writer);
         })
     }
 

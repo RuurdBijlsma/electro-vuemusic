@@ -6,8 +6,8 @@
             <album-square v-for="playlist in discoverPlaylists" :key="playlist.id" type="playlist" :album="playlist"/>
         </div>
 
-        <span class="md-title">Recently played</span>
-        <div class="recently-played horizontal-scroll">
+        <span class="md-title" v-if="recentAlbums.length > 0">Recently played</span>
+        <div class="recently-played horizontal-scroll" v-if="recentAlbums.length > 0">
             <album-square v-for="album in recentAlbums" :key="album.superId" type="album" :album="album"/>
         </div>
 
