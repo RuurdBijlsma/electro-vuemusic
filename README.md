@@ -1,5 +1,7 @@
 # Electron Vue Music
 
+Newer version available at https://github.com/RuurdBijlsma/VueMusic
+
 ## Screenshots
 
 ### Home page with handy links
